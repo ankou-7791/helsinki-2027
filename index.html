@@ -28,6 +28,8 @@ footer{max-width:720px;margin:auto;padding:0 14px 40px;color:#7a8287;font-size:1
 button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 13px;border-radius:12px;color:var(--ink);font-weight:600;margin-top:10px}
 .wishes{margin:28px 0 8px}.wishbox{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.035)}.wishbox h2{font-size:21px;margin:0 0 5px}.wishintro{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 14px}.wishgrid{display:grid;gap:9px}.wishinput{width:100%;font:inherit;border:1px solid #cfd4d5;border-radius:11px;padding:11px 12px;background:#fafafa;color:var(--ink)}select.wishinput{appearance:auto;cursor:pointer}textarea.wishinput{min-height:92px;resize:vertical}.wishsubmit{border:0;background:var(--accent);color:#fff;padding:11px 14px;border-radius:11px;font:inherit;font-weight:700;cursor:pointer}.wishstatus{font-size:12px;color:var(--muted);min-height:18px}.wishlist{margin-top:18px;display:grid;gap:9px}.wishitem{background:#f5f7f6;border-radius:12px;padding:11px 12px}.wishitem strong{font-size:14px}.wishitem p{margin:4px 0 0;font-size:13px;line-height:1.4;color:#4d575d}.empty{font-size:13px;color:var(--muted);padding:4px 0}
 .sauna-note{margin-top:10px;padding:10px 12px;border-radius:11px;background:#eef5f6;border:1px solid #d5e4e6;font-size:13px;line-height:1.4;color:#3f5055}.sauna-note strong{font-weight:750}
+
+.vote-box{margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#fafbfb}.vote-title{font-size:12px;font-weight:750;color:var(--muted);margin-bottom:8px}.vote-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.vote-line label{font-size:12px;color:var(--muted);font-weight:650}.voter-select{font:inherit;font-size:12px;border:1px solid #cfd4d5;border-radius:9px;padding:7px 9px;background:#fff;color:var(--ink)}.vote-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.vote-btn{border:1px solid #ccd3d5;background:#fff;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;cursor:pointer}.vote-btn.active{border-color:var(--accent);background:#edf4f5}.vote-btn:disabled{opacity:.55;cursor:wait}.vote-results{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.vote-result{font-size:11px;padding:5px 8px;border-radius:8px;background:#eef1f2;color:#465157}.vote-result.muss{background:#e9f3ec}.vote-result.egal{background:#f4f1e8}.vote-result.nicht{background:#f5eaea}.vote-hint{font-size:11px;color:var(--muted);margin-top:7px}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -47,47 +49,398 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Mi · 10.02.</div><div class="date">Ankunft & historisches Helsinki</div></div></div>
 <div class="flight"><strong>✈️ Hinflug – geplant</strong><div class="route"><span>PRG 11:40</span><span>→</span><span>HEL 14:55</span></div><div class="small">Finnair · nonstop · Flugplanangabe, kann sich bis 2027 ändern</div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Helsinki_Cathedral_in_winter.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Senatsplatz & Dom</p><div class="desc">Das historische Zentrum Helsinkis und das bekannteste neoklassizistische Wahrzeichen der Stadt.</div><span class="tag">MUSS</span></div></div></div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Uspensky_Cathedral_Helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Uspenski-Kathedrale</p><div class="desc">Orthodoxe Kathedrale auf Katajanokka – rote Backsteine, goldene Kuppeln und ein starker Kontrast zum Dom.</div><span class="tag">ARCHITEKTUR</span></div></div></div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Market_Square%2C_Helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Marktplatz & Alte Markthalle</p><div class="desc">Hafen, finnische Spezialitäten und guter Ort für einen ersten kulinarischen Eindruck.</div><span class="tag">KULINARIK</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Katajanokka & Esplanadi</p><div class="desc">Jugendstil-Viertel am Wasser und anschließend die zentrale Parkanlage Esplanadi.</div><span class="tag">SPAZIERGANG</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Kaffeepause</p><div class="desc">Erster finnischer Kaffee-Stopp – ideal mit Korvapuusti oder Karjalanpiirakka.</div><span class="tag">KAFFEE</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Helsinki City Museum</p><div class="desc">Kompakter Einstieg in die Geschichte der Stadt, direkt am Senatsplatz.</div><span class="tag">KULTUR</span></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Helsinki_Cathedral_in_winter.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Senatsplatz & Dom</p><div class="desc">Das historische Zentrum Helsinkis und das bekannteste neoklassizistische Wahrzeichen der Stadt.</div><span class="tag">MUSS</span>
+<div class="vote-box" data-programmpunkt="Senatsplatz &amp; Dom">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Uspensky_Cathedral_Helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Uspenski-Kathedrale</p><div class="desc">Orthodoxe Kathedrale auf Katajanokka – rote Backsteine, goldene Kuppeln und ein starker Kontrast zum Dom.</div><span class="tag">ARCHITEKTUR</span>
+<div class="vote-box" data-programmpunkt="Uspenski-Kathedrale">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Market_Square%2C_Helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Marktplatz & Alte Markthalle</p><div class="desc">Hafen, finnische Spezialitäten und guter Ort für einen ersten kulinarischen Eindruck.</div><span class="tag">KULINARIK</span>
+<div class="vote-box" data-programmpunkt="Marktplatz &amp; Alte Markthalle">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Katajanokka & Esplanadi</p><div class="desc">Jugendstil-Viertel am Wasser und anschließend die zentrale Parkanlage Esplanadi.</div><span class="tag">SPAZIERGANG</span>
+<div class="vote-box" data-programmpunkt="Katajanokka &amp; Esplanadi">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Kaffeepause</p><div class="desc">Erster finnischer Kaffee-Stopp – ideal mit Korvapuusti oder Karjalanpiirakka.</div><span class="tag">KAFFEE</span>
+<div class="vote-box" data-programmpunkt="☕ Kaffeepause">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Helsinki City Museum</p><div class="desc">Kompakter Einstieg in die Geschichte der Stadt, direkt am Senatsplatz.</div><span class="tag">KULTUR</span>
+<div class="vote-box" data-programmpunkt="Helsinki City Museum">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
 </section>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Do · 11.02.</div><div class="date">Secret Food Tour & Suomenlinna</div></div></div>
 <div class="note"><strong>Kein Frühstück vor der Food Tour.</strong> Die Tour übernimmt den kulinarischen Teil des Vormittags.</div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">🥟 Secret Food Tour</p><div class="desc">Finnische Spezialitäten und lokale Küche – Vormittag als kulinarischer Schwerpunkt.</div><span class="tag">FIX EINGEPLANT</span></div></div></div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Suomenlinna_helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Suomenlinna</p><div class="desc">UNESCO-Welterbe und historische Seefestung auf den Inseln vor Helsinki. Die HSL-Fähre fährt ganzjährig vom Marktplatz; die Überfahrt dauert etwa 15 Minuten.</div><span class="tag">MUSS · UNESCO</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Kaffeepause</p><div class="desc">Kaffee-Stopp rund um Suomenlinna bzw. nach der Rückkehr in die Innenstadt.</div><span class="tag">KAFFEE</span></div></div></div></div>
-<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/HelsinkiCentral_Panorama.png?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">Helsinki Hauptbahnhof</p><div class="desc">Eliel Saarinens monumentaler Bahnhof mit den berühmten Granitfiguren und dem Uhrturm. Ein Architektur-Highlight und zugleich euer Ankunftspunkt vom Flughafen.</div><span class="tag">ARCHITEKTUR · MUSS</span></div></div></div></div><div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Central_Library_Oodi_in_Helsinki%2C_Finland%2C_2019_September.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Oodi – Zentralbibliothek</p><div class="desc">Helsinkis spektakuläre Zentralbibliothek direkt am Kansalaistori. Besonders sehenswert sind die geschwungene Holzfassade und die ungewöhnliche moderne Architektur. Vom Hauptbahnhof sind es nur wenige Minuten zu Fuß.</div><span class="tag">ARCHITEKTUR · MUSS</span></div></div></div></div>
-<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/KatajanokanmaailmanpyöräWheelStoraEnsoHQ_02.JPG?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">🎡 SkyWheel Helsinki</p><div class="desc">Das große Riesenrad am Südhafen. Auch im Winter in Betrieb; die konkreten Öffnungszeiten für Februar 2027 sollten vor der Reise noch einmal geprüft werden.</div><span class="tag">HAFEN · GEBURTSTAG</span></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">🥟 Secret Food Tour</p><div class="desc">Finnische Spezialitäten und lokale Küche – Vormittag als kulinarischer Schwerpunkt.</div><span class="tag">FIX EINGEPLANT</span>
+<div class="vote-box" data-programmpunkt="🥟 Secret Food Tour">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Suomenlinna_helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Suomenlinna</p><div class="desc">UNESCO-Welterbe und historische Seefestung auf den Inseln vor Helsinki. Die HSL-Fähre fährt ganzjährig vom Marktplatz; die Überfahrt dauert etwa 15 Minuten.</div><span class="tag">MUSS · UNESCO</span>
+<div class="vote-box" data-programmpunkt="Suomenlinna">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Kaffeepause</p><div class="desc">Kaffee-Stopp rund um Suomenlinna bzw. nach der Rückkehr in die Innenstadt.</div><span class="tag">KAFFEE</span>
+<div class="vote-box" data-programmpunkt="☕ Kaffeepause">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/HelsinkiCentral_Panorama.png?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">Helsinki Hauptbahnhof</p><div class="desc">Eliel Saarinens monumentaler Bahnhof mit den berühmten Granitfiguren und dem Uhrturm. Ein Architektur-Highlight und zugleich euer Ankunftspunkt vom Flughafen.</div><span class="tag">ARCHITEKTUR · MUSS</span>
+<div class="vote-box" data-programmpunkt="Helsinki Hauptbahnhof">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div><div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Central_Library_Oodi_in_Helsinki%2C_Finland%2C_2019_September.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Oodi – Zentralbibliothek</p><div class="desc">Helsinkis spektakuläre Zentralbibliothek direkt am Kansalaistori. Besonders sehenswert sind die geschwungene Holzfassade und die ungewöhnliche moderne Architektur. Vom Hauptbahnhof sind es nur wenige Minuten zu Fuß.</div><span class="tag">ARCHITEKTUR · MUSS</span>
+<div class="vote-box" data-programmpunkt="Oodi – Zentralbibliothek">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/KatajanokanmaailmanpyöräWheelStoraEnsoHQ_02.JPG?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">🎡 SkyWheel Helsinki</p><div class="desc">Das große Riesenrad am Südhafen. Auch im Winter in Betrieb; die konkreten Öffnungszeiten für Februar 2027 sollten vor der Reise noch einmal geprüft werden.</div><span class="tag">HAFEN · GEBURTSTAG</span>
+<div class="vote-box" data-programmpunkt="🎡 SkyWheel Helsinki">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
 <div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Allas_Sea_Pool.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">🧖 Allas Sea Pool</p><div class="desc">Direkt neben dem SkyWheel: finnische Saunen sowie Außenbecken und Meerwasserbecken. Ganzjährig geöffnet und damit auch im Februar eine besondere Helsinki-Erfahrung.</div><span class="tag">SAUNA · MUSS</span>
+<div class="vote-box" data-programmpunkt="🧖 Allas Sea Pool">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div>
 <div class="sauna-note"><strong>🩱 Badesachen nicht vergessen!</strong><br>In der gemischten Sauna von Allas Sea Pool wird Badekleidung getragen – Bikini oder Badehose einpacken.</div></div></div></div></div>
-<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Kamppi_Chapel.jpg?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">Kamppi Chapel of Silence</p><div class="desc">Außergewöhnliche Holzkapelle mitten im Zentrum – ein kurzer, ruhiger Architektur-Stopp.</div><span class="tag">ARCHITEKTUR</span></div></div></div></div>
+<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Kamppi_Chapel.jpg?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">Kamppi Chapel of Silence</p><div class="desc">Außergewöhnliche Holzkapelle mitten im Zentrum – ein kurzer, ruhiger Architektur-Stopp.</div><span class="tag">ARCHITEKTUR</span>
+<div class="vote-box" data-programmpunkt="Kamppi Chapel of Silence">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
 </section>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Fr · 12.02.</div><div class="date">🎂 Geburtstag · Korkeasaari</div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Frühstück</p><div class="desc">Entspannt frühstücken – heute steht der Zoo im Mittelpunkt.</div><span class="tag">GEBURTSTAG</span></div></div></div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Korkeasaari_Zoo_%28Helsinki%2C_Finland%29_new_entrance_building_Jul_4%2C_2026.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Korkeasaari Zoo</p><div class="desc">Helsinkis Zoo auf einer Insel – im Februar besonders passend für die Winteratmosphäre und kälteliebende Tiere.<br>Aktuell ist der Zoo ganzjährig geöffnet.</div><span class="tag">🎂 PFLICHT · 10–16 UHR</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Kalasatama / REDI</p><div class="desc">Moderner Stadtteil als bewusster Kontrast zum historischen Helsinki.</div><span class="tag">MODERNES HELSINKI</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Geburtstags-Kaffeepause</p><div class="desc">Kaffee und etwas Süßes – bewusst als kleiner Geburtstags-Stopp.</div><span class="tag">KAFFEE</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">🎂 Geburtstagsessen</p><div class="desc">Abends ein richtig gutes finnisches bzw. nordisches Restaurant.</div><span class="tag">FIX</span></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Frühstück</p><div class="desc">Entspannt frühstücken – heute steht der Zoo im Mittelpunkt.</div><span class="tag">GEBURTSTAG</span>
+<div class="vote-box" data-programmpunkt="Frühstück">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Korkeasaari_Zoo_%28Helsinki%2C_Finland%29_new_entrance_building_Jul_4%2C_2026.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Korkeasaari Zoo</p><div class="desc">Helsinkis Zoo auf einer Insel – im Februar besonders passend für die Winteratmosphäre und kälteliebende Tiere.<br>Aktuell ist der Zoo ganzjährig geöffnet.</div><span class="tag">🎂 PFLICHT · 10–16 UHR</span>
+<div class="vote-box" data-programmpunkt="Korkeasaari Zoo">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Kalasatama / REDI</p><div class="desc">Moderner Stadtteil als bewusster Kontrast zum historischen Helsinki.</div><span class="tag">MODERNES HELSINKI</span>
+<div class="vote-box" data-programmpunkt="Kalasatama / REDI">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Geburtstags-Kaffeepause</p><div class="desc">Kaffee und etwas Süßes – bewusst als kleiner Geburtstags-Stopp.</div><span class="tag">KAFFEE</span>
+<div class="vote-box" data-programmpunkt="☕ Geburtstags-Kaffeepause">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">🎂 Geburtstagsessen</p><div class="desc">Abends ein richtig gutes finnisches bzw. nordisches Restaurant.</div><span class="tag">FIX</span>
+<div class="vote-box" data-programmpunkt="🎂 Geburtstagsessen">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
 </section>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Sa · 13.02.</div><div class="date">Architektur, Kunst & Design</div></div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Temppeliaukio_Church_Helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Temppeliaukio-Kirche</p><div class="desc">Berühmte Felsenkirche, direkt in den Granit gebaut – eines der ungewöhnlichsten Bauwerke Helsinkis.</div><span class="tag">MUSS</span></div></div></div></div>
-<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Sibelius_park3.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Sibelius-Denkmal</p><div class="desc">Über 600 Stahlrohre bilden Eila Hiltunens ungewöhnliches Denkmal für den finnischen Komponisten Jean Sibelius.</div><span class="tag">KULTUR · MUSS</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Kaffeepause</p><div class="desc">Kaffee-Stopp in Töölö oder auf dem Weg zurück ins Zentrum.</div><span class="tag">KAFFEE</span></div></div></div></div>
-<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Glass_Palace_Square_and_Amos_Rex_Helsinki_Finland_02.jpg?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">Amos Rex</p><div class="desc">Unterirdisches Kunstmuseum unter spektakulären Betonkuppeln. Alternativ Ateneum, wenn euch klassische finnische Kunst mehr interessiert.</div><span class="tag">KUNST</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Design District & Bulevardi</p><div class="desc">Finnisches Design, Galerien, Geschäfte und historische Innenstadtarchitektur.</div><span class="tag">DESIGN</span></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Temppeliaukio_Church_Helsinki.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Temppeliaukio-Kirche</p><div class="desc">Berühmte Felsenkirche, direkt in den Granit gebaut – eines der ungewöhnlichsten Bauwerke Helsinkis.</div><span class="tag">MUSS</span>
+<div class="vote-box" data-programmpunkt="Temppeliaukio-Kirche">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Sibelius_park3.jpg?width=1200"><div class="body"><div class="row"><input class="check"><div><p class="name">Sibelius-Denkmal</p><div class="desc">Über 600 Stahlrohre bilden Eila Hiltunens ungewöhnliches Denkmal für den finnischen Komponisten Jean Sibelius.</div><span class="tag">KULTUR · MUSS</span>
+<div class="vote-box" data-programmpunkt="Sibelius-Denkmal">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Kaffeepause</p><div class="desc">Kaffee-Stopp in Töölö oder auf dem Weg zurück ins Zentrum.</div><span class="tag">KAFFEE</span>
+<div class="vote-box" data-programmpunkt="☕ Kaffeepause">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><img class="panorama" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Glass_Palace_Square_and_Amos_Rex_Helsinki_Finland_02.jpg?width=1600"><div class="body"><div class="row"><input class="check"><div><p class="name">Amos Rex</p><div class="desc">Unterirdisches Kunstmuseum unter spektakulären Betonkuppeln. Alternativ Ateneum, wenn euch klassische finnische Kunst mehr interessiert.</div><span class="tag">KUNST</span>
+<div class="vote-box" data-programmpunkt="Amos Rex">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Design District & Bulevardi</p><div class="desc">Finnisches Design, Galerien, Geschäfte und historische Innenstadtarchitektur.</div><span class="tag">DESIGN</span>
+<div class="vote-box" data-programmpunkt="Design District &amp; Bulevardi">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
 
 </section>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">So · 14.02.</div><div class="date">Letzter Vormittag</div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Frühstück</p><div class="desc">Letztes finnisches Frühstück außerhalb des Hotels.</div><span class="tag">KAFFEE</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Letzte Runde Innenstadt</p><div class="desc">Markthalle, Souvenirs, Lieblingscafé oder ein noch fehlender Programmpunkt.</div><span class="tag">FLEXIBEL</span></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Letzte Kaffeepause</p><div class="desc">Noch einmal finnischer Kaffee, bevor es zum Flughafen geht.</div><span class="tag">KAFFEE</span></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Frühstück</p><div class="desc">Letztes finnisches Frühstück außerhalb des Hotels.</div><span class="tag">KAFFEE</span>
+<div class="vote-box" data-programmpunkt="Frühstück">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">Letzte Runde Innenstadt</p><div class="desc">Markthalle, Souvenirs, Lieblingscafé oder ein noch fehlender Programmpunkt.</div><span class="tag">FLEXIBEL</span>
+<div class="vote-box" data-programmpunkt="Letzte Runde Innenstadt">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
+<div class="card"><div class="body"><div class="row"><input class="check"><div><p class="name">☕ Letzte Kaffeepause</p><div class="desc">Noch einmal finnischer Kaffee, bevor es zum Flughafen geht.</div><span class="tag">KAFFEE</span>
+<div class="vote-box" data-programmpunkt="☕ Letzte Kaffeepause">
+  <div class="vote-title">Eure gemeinsame Abstimmung</div>
+  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
+    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
+  </select></div>
+  <div class="vote-buttons">
+    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
+    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
+    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
+  </div>
+  <div class="vote-results"></div>
+  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
+</div></div></div></div></div>
 <div class="flight"><strong>✈️ Rückflug – geplant</strong><div class="route"><span>HEL 17:35</span><span>→</span><span>PRG 18:50</span></div><div class="small">Finnair · nonstop · Flugplanangabe, kann sich bis 2027 ändern</div></div>
 </section>
 <section class="wishes">
@@ -164,6 +517,46 @@ wishForm.addEventListener("submit",async e=>{
 });
 
 loadWishes();
+
+// Gemeinsame Abstimmungen über Supabase
+(async()=>{
+ const boxes=[...document.querySelectorAll('.vote-box')];
+ if(!boxes.length)return;
+ const saved=localStorage.getItem('helsinki2027-voter')||'';
+ boxes.forEach(b=>b.querySelector('.voter-select').value=saved);
+ try{
+  const loadVotes=async()=>{
+   const {data,error}=await supabaseClient.from('abstimmungen').select('programmpunkt,name,stimme').order('name',{ascending:true});
+   if(error)throw error;
+   boxes.forEach(box=>{
+    const point=box.dataset.programmpunkt, rows=(data||[]).filter(r=>r.programmpunkt===point);
+    const results=box.querySelector('.vote-results');
+    results.innerHTML=rows.map(r=>{
+      const label=r.stimme==='muss'?'👍 Muss':r.stimme==='egal'?'🤷 Egal':'👎 Eher nicht';
+      return `<span class="vote-result ${r.stimme}">${escapeHtml(r.name)}: ${label}</span>`;
+    }).join('');
+    const who=box.querySelector('.voter-select').value;
+    const mine=rows.find(r=>r.name===who);
+    box.querySelectorAll('.vote-btn').forEach(btn=>btn.classList.toggle('active',!!mine&&mine.stimme===btn.dataset.vote));
+   });
+  };
+  boxes.forEach(box=>{
+   const select=box.querySelector('.voter-select');
+   select.addEventListener('change',async()=>{localStorage.setItem('helsinki2027-voter',select.value);await loadVotes();});
+   box.querySelectorAll('.vote-btn').forEach(btn=>btn.addEventListener('click',async()=>{
+    const name=select.value;
+    if(!name){alert('Bitte zuerst deinen Namen auswählen.');return;}
+    box.querySelectorAll('.vote-btn').forEach(b=>b.disabled=true);
+    const {error}=await supabaseClient.from('abstimmungen').upsert({programmpunkt:box.dataset.programmpunkt,name,stimme:btn.dataset.vote},{onConflict:'programmpunkt,name'});
+    box.querySelectorAll('.vote-btn').forEach(b=>b.disabled=false);
+    if(error){console.error(error);alert('Die Abstimmung konnte nicht gespeichert werden.');return;}
+    await loadVotes();
+   }));
+  });
+  await loadVotes();
+ }catch(err){console.error('Abstimmungen:',err);boxes.forEach(b=>b.querySelector('.vote-hint').textContent='Abstimmung momentan nicht erreichbar.');}
+ function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
+})();
 </script>
 </body>
 </html>
