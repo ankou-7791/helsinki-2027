@@ -26,7 +26,7 @@ main{max-width:720px;margin:auto;padding:14px 14px 40px}
 .flight{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;margin:10px 0}.flight strong{font-size:16px}.route{display:flex;justify-content:space-between;align-items:center;margin-top:9px;font-size:20px;font-weight:750}.small{font-size:12px;color:var(--muted);margin-top:4px}
 footer{max-width:720px;margin:auto;padding:0 14px 40px;color:#7a8287;font-size:11px;line-height:1.45}
 button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 13px;border-radius:12px;color:var(--ink);font-weight:600;margin-top:10px}
-.wishes{margin:28px 0 8px}.wishbox{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.035)}.wishbox h2{font-size:21px;margin:0 0 5px}.wishintro{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 14px}.wishgrid{display:grid;gap:9px}.wishinput{width:100%;font:inherit;border:1px solid #cfd4d5;border-radius:11px;padding:11px 12px;background:#fafafa;color:var(--ink)}select.wishinput{appearance:auto;cursor:pointer}textarea.wishinput{min-height:92px;resize:vertical}.wishsubmit{border:0;background:var(--accent);color:#fff;padding:11px 14px;border-radius:11px;font:inherit;font-weight:700;cursor:pointer}.wishstatus{font-size:12px;color:var(--muted);min-height:18px}.wishlist{margin-top:18px;display:grid;gap:9px}.wishitem{background:#f5f7f6;border-radius:12px;padding:12px}.wishitem strong{font-size:14px}.wish-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.wish-delete{border:1px solid #d5dada;background:#fff;color:#5b666b;border-radius:8px;padding:5px 8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.wish-delete:hover{background:#f0f2f2}.wish-delete:disabled{opacity:.5;cursor:not-allowed}.wishitem p{margin:4px 0 0;font-size:13px;line-height:1.4;color:#4d575d}.empty{font-size:13px;color:var(--muted);padding:4px 0}
+.wishes{margin:28px 0 8px}.wishbox{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.035)}.wishbox h2{font-size:21px;margin:0 0 5px}.wishintro{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 14px}.wishgrid{display:grid;gap:9px}.wishinput{width:100%;font:inherit;border:1px solid #cfd4d5;border-radius:11px;padding:11px 12px;background:#fafafa;color:var(--ink)}select.wishinput{appearance:auto;cursor:pointer}textarea.wishinput{min-height:92px;resize:vertical}.wishsubmit{border:0;background:var(--accent);color:#fff;padding:11px 14px;border-radius:11px;font:inherit;font-weight:700;cursor:pointer}.wishstatus{font-size:12px;color:var(--muted);min-height:18px}.wishlist{margin-top:18px;display:grid;gap:9px}.wishitem{background:#f5f7f6;border-radius:12px;padding:12px}.wishitem strong{font-size:14px}.wish-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.wish-edit{border:1px solid #d5dada;background:#fff;color:#5b666b;border-radius:8px;padding:5px 8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.wish-edit:hover{background:#f0f2f2}.wish-edit:disabled{opacity:.5;cursor:not-allowed}.wish-delete{border:1px solid #d5dada;background:#fff;color:#5b666b;border-radius:8px;padding:5px 8px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.wish-delete:hover{background:#f0f2f2}.wish-delete:disabled{opacity:.5;cursor:not-allowed}.wishitem p{margin:4px 0 0;font-size:13px;line-height:1.4;color:#4d575d}.empty{font-size:13px;color:var(--muted);padding:4px 0}
 .sauna-note{margin-top:10px;padding:10px 12px;border-radius:11px;background:#eef5f6;border:1px solid #d5e4e6;font-size:13px;line-height:1.4;color:#3f5055}.sauna-note strong{font-weight:750}
 
 .vote-box{margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#fafbfb}.vote-title{font-size:12px;font-weight:750;color:var(--muted);margin-bottom:8px}.vote-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.vote-line label{font-size:12px;color:var(--muted);font-weight:650}.voter-select{font:inherit;font-size:12px;border:1px solid #cfd4d5;border-radius:9px;padding:7px 9px;background:#fff;color:var(--ink)}.vote-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.vote-btn{border:1px solid #ccd3d5;background:#fff;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;cursor:pointer}.vote-btn.active{border-color:var(--accent);background:#edf4f5}.vote-btn:disabled{opacity:.55;cursor:wait}.vote-results{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.vote-result{font-size:11px;padding:5px 8px;border-radius:8px;background:#eef1f2;color:#465157}.vote-result.muss{background:#e9f3ec}.vote-result.egal{background:#f4f1e8}.vote-result.nicht{background:#f5eaea}.vote-hint{font-size:11px;color:var(--muted);margin-top:7px}
@@ -496,8 +496,8 @@ function escapeHtml(value){return String(value).replace(/[&<>'"]/g,c=>({"&":"&am
 function renderWishes(rows){
  if(!rows.length){wishList.innerHTML='<div class="empty">Noch keine Wünsche eingetragen.</div>';return;}
  wishList.innerHTML=rows.map(r=>`<div class="wishitem">
-   <div class="wish-head"><strong>${escapeHtml(r.name)}</strong><button class="wish-delete" type="button" data-wish-id="${r.id}" data-wish-owner="${escapeHtml(r.name)}">Wunsch löschen</button></div>
-   <p>${escapeHtml(r.wunsch)}</p>
+   <div class="wish-head"><strong>${escapeHtml(r.name)}</strong><div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end"><button class="wish-edit" type="button" data-wish-id="${r.id}" data-wish-owner="${escapeHtml(r.name)}">Wunsch bearbeiten</button><button class="wish-delete" type="button" data-wish-id="${r.id}" data-wish-owner="${escapeHtml(r.name)}">Wunsch löschen</button></div></div>
+   <p class="wish-text" data-wish-text-id="${r.id}">${escapeHtml(r.wunsch)}</p>
    <div class="vote-box wish-vote-box" data-programmpunkt="__WUNSCH__${r.id}">
      <div class="vote-title">Eure gemeinsame Abstimmung</div>
      <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
@@ -512,6 +512,31 @@ function renderWishes(rows){
      <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
    </div>
  </div>`).join("");
+
+ document.querySelectorAll('.wish-edit').forEach(btn=>{
+   btn.onclick=()=>{
+     const current=localStorage.getItem('helsinki2027-voter')||'';
+     const owner=btn.dataset.wishOwner||'';
+     if(!current){alert('Bitte zuerst deinen Namen auswählen.');return;}
+     if(current!==owner){alert('Du kannst nur eigene Wünsche bearbeiten.');return;}
+     const p=document.querySelector(`[data-wish-text-id="${btn.dataset.wishId}"]`);
+     if(!p)return;
+     const old=p.textContent;
+     p.outerHTML=`<div class="wish-editbox" data-wish-edit-id="${btn.dataset.wishId}"><textarea class="wishinput" maxlength="500">${escapeHtml(old)}</textarea><div style="display:flex;gap:7px;margin-top:7px"><button class="wish-save-edit" type="button">Speichern</button><button class="wish-cancel-edit" type="button">Abbrechen</button></div><div class="wishstatus wish-edit-status"></div></div>`;
+     btn.style.display='none';
+     const box=document.querySelector(`[data-wish-edit-id="${btn.dataset.wishId}"]`);
+     const ta=box.querySelector('textarea'); ta.focus();
+     box.querySelector('.wish-cancel-edit').onclick=()=>loadWishes();
+     box.querySelector('.wish-save-edit').onclick=async()=>{
+       const wunsch=ta.value.trim();
+       if(!wunsch){box.querySelector('.wish-edit-status').textContent='Bitte einen Wunsch eingeben.';return;}
+       const saveBtn=box.querySelector('.wish-save-edit'); saveBtn.disabled=true;
+       const {error}=await supabaseClient.from('wuensche').update({wunsch}).eq('id',btn.dataset.wishId).eq('name',owner);
+       if(error){console.error('Wunsch bearbeiten:',error);box.querySelector('.wish-edit-status').textContent='Der Wunsch konnte nicht geändert werden. Bitte prüfe die Supabase-Berechtigung.';saveBtn.disabled=false;return;}
+       await loadWishes();
+     };
+   };
+ });
 
  document.querySelectorAll('.wish-delete').forEach(btn=>{
    btn.onclick=async()=>{
