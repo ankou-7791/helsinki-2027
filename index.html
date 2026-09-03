@@ -30,6 +30,8 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
 .sauna-note{margin-top:10px;padding:10px 12px;border-radius:11px;background:#eef5f6;border:1px solid #d5e4e6;font-size:13px;line-height:1.4;color:#3f5055}.sauna-note strong{font-weight:750}
 
 .vote-box{margin-top:12px;padding:11px 12px;border:1px solid var(--line);border-radius:13px;background:#fafbfb}.vote-title{font-size:12px;font-weight:750;color:var(--muted);margin-bottom:8px}.vote-line{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.vote-line label{font-size:12px;color:var(--muted);font-weight:650}.voter-select{font:inherit;font-size:12px;border:1px solid #cfd4d5;border-radius:9px;padding:7px 9px;background:#fff;color:var(--ink)}.vote-buttons{display:flex;gap:7px;flex-wrap:wrap;margin-top:8px}.vote-btn{border:1px solid #ccd3d5;background:#fff;border-radius:9px;padding:7px 10px;font:inherit;font-size:12px;cursor:pointer}.vote-btn.active{border-color:var(--accent);background:#edf4f5}.vote-btn:disabled{opacity:.55;cursor:wait}.vote-results{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.vote-result{font-size:11px;padding:5px 8px;border-radius:8px;background:#eef1f2;color:#465157}.vote-result.muss{background:#e9f3ec}.vote-result.egal{background:#f4f1e8}.vote-result.nicht{background:#f5eaea}.vote-summary{margin-top:10px;padding-top:8px;border-top:1px solid #e4e7e6;font-size:11px;line-height:1.35;color:var(--muted)}.vote-counts{font-size:11px;color:var(--muted)}.vote-summary-main{margin-top:7px;font-size:12px;font-weight:700;color:var(--ink)}.vote-summary-status{display:inline-block;margin-top:5px;padding:4px 7px;border-radius:7px;font-size:10px;font-weight:750;background:#edf3f2;color:var(--accent)}.vote-summary-status.favorite{background:#e8f1eb}.vote-summary-status.option{background:#f2f0e8;color:#665b36}.vote-summary-status.remove{background:#f4eaea;color:#7a4a4a}.vote-summary-empty{font-size:11px;color:var(--muted)}.vote-hint{font-size:11px;color:var(--muted);margin-top:7px}
+
+.selection{margin:18px 0 26px}.selection-box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.035)}.selection-box h2{font-size:21px;margin:0 0 5px}.selection-intro{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 14px}.selection-list{display:grid;gap:9px}.selection-item{background:#f5f7f6;border-radius:12px;padding:12px}.selection-item-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}.selection-item-name{font-size:14px;font-weight:750}.selection-day{font-size:11px;color:var(--muted);margin-top:3px}.selection-status{flex:0 0 auto;font-size:10px;font-weight:750;padding:4px 7px;border-radius:7px;background:#e8f1eb;color:var(--accent)}.selection-meta{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.35}.selection-empty{font-size:13px;color:var(--muted);padding:4px 0}.selection-note{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.4}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -45,6 +47,14 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
   <div class="progress"><div class="bar" id="bar"></div></div>
   <div class="sub" id="count" style="margin-top:7px">0 erledigt</div>
 </header>
+<section class="selection" id="selectionSection">
+  <div class="selection-box">
+    <h2>Unsere Auswahl</h2>
+    <p class="selection-intro">Hier sammeln sich automatisch die Programmpunkte, die in der Gruppe besonders gut ankommen.</p>
+    <div class="selection-list" id="selectionList"><div class="selection-empty">Noch keine Stimmen ausgewertet.</div></div>
+    <div class="selection-note">Aktuell aufgenommen werden Favoriten ab 3 × „Muss sein“ sowie gute Optionen mit mindestens 2 × „Muss sein“ und keiner Gegenstimme.</div>
+  </div>
+</section>
 <main>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Mi · 10.02.</div><div class="date">Ankunft & historisches Helsinki</div></div></div>
@@ -601,6 +611,34 @@ async function loadWishVotes(){
 
 loadWishes();
 
+function updateSelectionFromVotes(data){
+ const list=document.getElementById('selectionList');
+ if(!list)return;
+ const boxes=[...document.querySelectorAll('.vote-box[data-programmpunkt]')].filter(b=>!b.classList.contains('wish-vote-box'));
+ const selected=[];
+ boxes.forEach(box=>{
+  const point=box.dataset.programmpunkt;
+  const rows=(data||[]).filter(r=>r.programmpunkt===point);
+  const muss=rows.filter(r=>r.stimme==='muss').length;
+  const egal=rows.filter(r=>r.stimme==='egal').length;
+  const nicht=rows.filter(r=>r.stimme==='nicht').length;
+  if(muss>=3 || (muss>=2 && nicht===0)){
+   const card=box.closest('.card');
+   const name=card?.querySelector('.name')?.textContent?.trim() || point;
+   const day=card?.closest('.day');
+   const dayTitle=day?.querySelector('.daytitle')?.textContent?.trim() || '';
+   const status=muss>=4?'Gruppenfavorit':muss>=3?'Sehr beliebt':'Gute Option';
+   selected.push({name,dayTitle,muss,egal,nicht,status});
+  }
+ });
+ selected.sort((a,b)=>b.muss-a.muss || a.nicht-b.nicht || a.egal-b.egal || a.name.localeCompare(b.name,'de'));
+ if(!selected.length){
+  list.innerHTML='<div class="selection-empty">Noch kein Programmpunkt erfüllt die Kriterien für die gemeinsame Auswahl.</div>';
+  return;
+ }
+ list.innerHTML=selected.map(x=>`<div class="selection-item"><div class="selection-item-top"><div><div class="selection-item-name">${escapeHtml(x.name)}</div><div class="selection-day">${escapeHtml(x.dayTitle)}</div></div><span class="selection-status">${escapeHtml(x.status)}</span></div><div class="selection-meta">👍 ${x.muss} × Muss sein · 🤷 ${x.egal} × Egal · 👎 ${x.nicht} × Eher nicht</div></div>`).join('');
+}
+
 // Gemeinsame Abstimmungen über Supabase
 (async()=>{
  const boxes=[...document.querySelectorAll('.vote-box')];
@@ -639,6 +677,7 @@ loadWishes();
     const mine=rows.find(r=>r.name===who);
     box.querySelectorAll('.vote-btn').forEach(btn=>btn.classList.toggle('active',!!mine&&mine.stimme===btn.dataset.vote));
    });
+   updateSelectionFromVotes(data||[]);
   };
   boxes.forEach(box=>{
    const select=box.querySelector('.voter-select');
