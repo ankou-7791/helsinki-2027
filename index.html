@@ -62,7 +62,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
     <h2>Unser Reiseplan</h2>
     <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen. Gewünschte Programmpunkte werden automatisch darum herum sinnvoll auf die Tage verteilt.</p>
     <div class="plan-days" id="planDays"></div>
-    <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div><div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.4">Planung mit Näherungswerten für Wege. Öffnungszeiten stammen aus aktuell verfügbaren offiziellen Angaben und können sich bis Februar 2027 ändern.</div>
+    <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div><div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.4">Planung mit gerouteten Fußwegen, Tageszeiten, Aufenthaltsdauern und hinterlegten Öffnungszeiten. Öffnungszeiten für 2027 bitte vor der Reise nochmals prüfen.</div>
   </div>
 </section>
 <section class="selection" id="selectionSection">
@@ -858,13 +858,23 @@ function routeForSlot(slot,items,dayKey){
  return {valid,rows,finish:cur};
 }
 function getFeasibleSlots(dayKey){
- const d=planDays.find(x=>x.key===dayKey); const fixed=fixedSorted(dayKey); const slots=[]; let cursor=d.dayStart; let from=d.start;
- fixed.forEach(f=>{
-  const gapStart=cursor; const gapEnd=f.startMin;
-  if(gapEnd-gapStart>=20)slots.push({start:gapStart,end:gapEnd,from});
-  from=planInfo(f.name); cursor=f.endMin;
+ const d=planDays.find(x=>x.key===dayKey); const fixed=fixedSorted(dayKey); const slots=[];
+ let cursor=d.dayStart; let from=d.start;
+ fixed.forEach((f,fi)=>{
+  // Only create a free-time slot inside the actual planning window.
+  // Fixed points before the dayStart (e.g. Dresden departure on arrival day)
+  // are displayed normally but must not create a slot before them.
+  const gapStart=Math.max(cursor,d.dayStart);
+  const gapEnd=Math.min(f.startMin,d.dayEnd);
+  if(gapEnd-gapStart>=20){
+   slots.push({start:gapStart,end:gapEnd,from,beforeFixedIndex:fi});
+  }
+  if(f.endMin>=d.dayStart && f.startMin<=d.dayEnd){
+   cursor=Math.max(cursor,f.endMin);
+   from=planInfo(f.name);
+  }
  });
- if(d.dayEnd-cursor>=20)slots.push({start:cursor,end:d.dayEnd,from});
+ if(d.dayEnd-cursor>=20)slots.push({start:cursor,end:d.dayEnd,from,beforeFixedIndex:fixed.length});
  return slots;
 }
 function scheduleItems(dayKey,items){
@@ -886,11 +896,26 @@ function scheduleItems(dayKey,items){
   });
   if(best)assigned[best.si].items.splice(best.pos,0,item);else unplaced.push(item);
  }
- const rows=[]; let slotIndex=0;
- for(const f of fixed){const slot=assigned[slotIndex++]; if(slot){const route=routeForSlot(slot,slot.items,dayKey);for(const r of route.rows){rows.push({x:{name:r.item.name,detail:`${hm(r.start)} · ca. ${planInfo(r.item.name).duration} Min.`,area:planInfo(r.item.name).area},fixed:false});}} rows.push({x:f,fixed:true});}
- while(slotIndex<assigned.length){const slot=assigned[slotIndex++];const route=routeForSlot(slot,slot.items,dayKey);for(const r of route.rows){rows.push({x:{name:r.item.name,detail:`${hm(r.start)} · ca. ${planInfo(r.item.name).duration} Min.`,area:planInfo(r.item.name).area},fixed:false});}}
+ const rows=[];
+ const addSlot=(slot)=>{
+  if(!slot)return;
+  const route=routeForSlot(slot,slot.items,dayKey);
+  for(const r of route.rows){
+   rows.push({x:{name:r.item.name,detail:`${hm(r.start)} · ca. ${planInfo(r.item.name).duration} Min.`,area:planInfo(r.item.name).area},fixed:false});
+  }
+ };
+ let slotIndex=0;
+ for(let fi=0;fi<fixed.length;fi++){
+  // A slot belongs immediately before its following fixed point.
+  while(slotIndex<assigned.length && assigned[slotIndex].beforeFixedIndex===fi){
+   addSlot(assigned[slotIndex++]);
+  }
+  rows.push({x:fixed[fi],fixed:true});
+ }
+ while(slotIndex<assigned.length)addSlot(assigned[slotIndex++]);
  return {ok:unplaced.length===0,rows,unplaced};
 }
+
 function orderedWithFixed(items,dayKey){const s=scheduleItems(dayKey,items);return s.ok?s.rows.map(r=>r.x):items;}
 function renderPlan(){
  const el=document.getElementById('planDays');if(!el)return;
