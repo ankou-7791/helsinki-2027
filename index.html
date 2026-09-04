@@ -789,8 +789,24 @@ const optionalMeta={
 let planState={};let pendingPlanPoint=null;
 function planInfo(name){return planAreas[name]||{area:'noch nicht zugeordnet',lat:60.169,lon:24.94,duration:60};}
 function dist(a,b){const dx=(a.lat-b.lat)*111;const dy=(a.lon-b.lon)*55;return Math.sqrt(dx*dx+dy*dy);}
-function travelMin(a,b){return Math.max(5,Math.round(dist(a,b)*1000/75));}
 function escapePlan(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const ROUTE_CACHE_KEY='helsinki2027-route-cache-v1';
+let routeMatrix={};let routeStatus='fallback';
+function routeKey(a,b){return `${a.lat.toFixed(5)},${a.lon.toFixed(5)}>${b.lat.toFixed(5)},${b.lon.toFixed(5)}`;}
+function loadRouteCache(){try{const raw=JSON.parse(localStorage.getItem(ROUTE_CACHE_KEY)||'{}');if(raw.ts&&Date.now()-raw.ts<7*86400000)return raw.data||{};}catch(e){}return {};}
+function saveRouteCache(data){try{localStorage.setItem(ROUTE_CACHE_KEY,JSON.stringify({ts:Date.now(),data}));}catch(e){}}
+function travelMinFallback(a,b){return Math.max(5,Math.round(dist(a,b)*1000/75));}
+function travelMin(a,b){return routeMatrix[routeKey(a,b)]??travelMinFallback(a,b);}
+async function fetchRouteTable(points){
+ const coords=points.map(p=>`${p.lon},${p.lat}`).join(';');
+ try{const res=await fetch(`https://router.project-osrm.org/table/v1/foot/${coords}?annotations=duration`,{mode:'cors'});if(!res.ok)throw new Error('OSRM table '+res.status);const json=await res.json();if(json.code!=='Ok'||!json.durations)throw new Error('Kein Routing-Ergebnis');const out={};for(let i=0;i<points.length;i++)for(let j=0;j<points.length;j++)if(i!==j&&json.durations[i]?.[j]!=null)out[routeKey(points[i],points[j])]=Math.max(2,Math.round(json.durations[i][j]/60));return out;}catch(e){console.warn('Fußrouting nicht verfügbar, nutze Näherung:',e);return null;}
+}
+async function prepareRouting(names){
+ routeMatrix=loadRouteCache();const points=[];const seen=new Set();const add=p=>{const k=`${p.lat.toFixed(5)},${p.lon.toFixed(5)}`;if(!seen.has(k)){seen.add(k);points.push(p);}};
+ planDays.forEach(d=>add(d.start));Object.values(fixedPlan).flat().forEach(f=>add(planInfo(f.name)));names.forEach(n=>add(planInfo(n)));
+ const fresh=await fetchRouteTable(points);if(fresh){routeMatrix={...routeMatrix,...fresh};saveRouteCache(routeMatrix);routeStatus='routing';return true;}routeStatus='fallback';return false;
+}
 function hm(min){const h=Math.floor(min/60),m=Math.round(min%60);return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;}
 const fixedPlan={
  'Mi':[
@@ -908,16 +924,17 @@ function candidateScore(name,dayKey,bucket){
  return nearest*1.4+routePenalty+Math.max(0,bucket.length-2)*0.7;
 }
 async function optimizePlan(){
- const names=[...(window.planUnassigned||[])]; if(!names.length){alert('Es gibt keine neuen Programmpunkte zu verteilen.');return;}
- const buckets={};planDays.forEach(d=>buckets[d.key]=[]);
- const ordered=names.map(name=>({name})).sort((a,b)=>planInfo(b.name).duration-planInfo(a.name).duration);
- const failed=[];
+ const names=[...(window.planUnassigned||[])];if(!names.length){alert('Es gibt keine neuen Programmpunkte zu verteilen.');return;}
+ const btn=document.getElementById('optimizePlanBtn');if(btn){btn.disabled=true;btn.textContent='Optimierung läuft …';}
+ await prepareRouting(names);
+ const buckets={};planDays.forEach(d=>buckets[d.key]=[]);const ordered=names.map(name=>({name})).sort((a,b)=>planInfo(b.name).duration-planInfo(a.name).duration);const failed=[];
  for(const item of ordered){let bestDay=null,bestScore=Infinity;for(const d of planDays){const score=candidateScore(item.name,d.key,buckets[d.key]);if(score<bestScore){bestScore=score;bestDay=d.key;}}if(bestDay)buckets[bestDay].push(item);else failed.push(item.name);}
  const updates=[];Object.entries(buckets).forEach(([day,items])=>items.forEach(x=>updates.push({programmpunkt:x.name,tag:day})));
- for(const row of updates){const {error}=await supabaseClient.from('reiseplan').upsert(row,{onConflict:'programmpunkt'});if(error){console.error(error);alert('Der Reiseplan konnte nicht vollständig optimiert werden.');return;}}
- await loadPlan();
- if(failed.length)alert(`Diese Punkte konnten wegen Tages-, Zeit- oder Öffnungsgrenzen nicht sinnvoll eingeplant werden: ${failed.join(', ')}`);
+ for(const row of updates){const {error}=await supabaseClient.from('reiseplan').upsert(row,{onConflict:'programmpunkt'});if(error){console.error(error);alert('Der Reiseplan konnte nicht vollständig optimiert werden.');if(btn){btn.disabled=false;btn.textContent='Reiseplan optimieren';}return;}}
+ await loadPlan();if(btn){btn.disabled=false;btn.textContent='Reiseplan optimieren';}
+ const note=routeStatus==='routing'?'Echte Fußwege aus dem Routing wurden berücksichtigt.':'Das Routing war nicht erreichbar; es wurde die Wege-Näherung verwendet.';if(failed.length)alert(`${note}\n\nDiese Punkte konnten wegen Tages-, Zeit- oder Öffnungsgrenzen nicht sinnvoll eingeplant werden: ${failed.join(', ')}`);else alert(note);
 }
+
 function initPlan(){
  document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{
   if(box.classList.contains('wish-vote-box'))return;
