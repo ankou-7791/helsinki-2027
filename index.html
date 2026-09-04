@@ -38,7 +38,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
  .plan-assign{display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:9px;border-top:1px solid #e7ecec}.plan-assign-label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}.plan-inline-choice{flex:1;min-width:0;font:inherit;font-size:11px;border:1px solid #ccd8d8;border-radius:9px;padding:7px;background:#f7faf9}.plan-assign .add-plan-btn{margin-top:0;white-space:nowrap}
 .plan-assigned{margin-top:10px}.plan-assigned .plan-inline-choice{font-weight:600}.plan-assigned .add-plan-btn{font-size:12px}
 .plan-assign{display:block}.plan-assign-top{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}.plan-assign-status{font-size:11px;color:var(--muted);line-height:1.35}.plan-assign-controls{display:flex;align-items:center;gap:7px}.plan-assign-controls .plan-inline-choice{flex:1}.plan-assigned .plan-assign-status{color:#47635e}.plan-assigned .plan-inline-choice{font-weight:600}
-</style>
+ .plan-actions{display:flex;justify-content:flex-end;margin-top:12px}.plan-actions button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:750;cursor:pointer}.plan-actions .primary{background:var(--accent);color:#fff}.plan-assign-controls{display:flex;gap:8px}.add-plan-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.add-plan-btn:disabled{opacity:.65;cursor:default}.plan-assign-status{font-size:11px;color:var(--muted)} </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
@@ -60,19 +60,11 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
 <section class="plan-section" id="planSection">
   <div class="plan-box">
     <h2>Unser Reiseplan</h2>
-    <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen und den Programmpunkten, die ihr gemeinsam auswählt. Die festen Punkte geben den Rahmen vor; die übrigen Punkte werden darum herum sinnvoll angeordnet.</p>
+    <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen. Gewünschte Programmpunkte werden automatisch darum herum sinnvoll auf die Tage verteilt.</p>
     <div class="plan-days" id="planDays"></div>
-    <div class="plan-warning" id="planWarning" style="display:none"></div>
+    <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div>
   </div>
 </section>
-<div class="plan-dialog" id="planDialog" aria-hidden="true">
-  <div class="plan-dialog-card">
-    <h3>Zum Reiseplan hinzufügen</h3>
-    <p id="planDialogText"></p>
-    <select class="plan-day-choice" id="planDayChoice"></select>
-    <div class="plan-dialog-actions"><button type="button" id="planCancel">Abbrechen</button><button type="button" class="primary" id="planAdd">Hinzufügen</button></div>
-  </div>
-</div>
 <section class="selection" id="selectionSection">
   <div class="selection-box">
     <h2>Unsere Auswahl</h2>
@@ -81,7 +73,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
     <div class="selection-note">Aktuell aufgenommen werden Favoriten ab 3 × „Muss sein“ sowie gute Optionen mit mindestens 2 × „Muss sein“ und keiner Gegenstimme.</div><div class="removal-box"><h3>Streichkandidaten</h3><p class="removal-intro">Diese Programmpunkte haben aktuell mehr Gegenstimmen als Zustimmung und mindestens zwei „Eher nicht“.</p><div class="removal-list" id="removalList"><div class="removal-empty">Noch keine Streichkandidaten.</div></div></div>
   </div>
 </section>
-<section class="all-programs" id="allPrograms"><div class="all-programs-head"><h2>Alle Programmpunkte</h2><p>Hier findet ihr die optionalen Programmpunkte einzeln. Erst ansehen und abstimmen, dann könnt ihr einen Wunschtermin auswählen und den Punkt in den Reiseplan übernehmen.</p></div></section>
+<section class="all-programs" id="allPrograms"><div class="all-programs-head"><h2>Alle Programmpunkte</h2><p>Hier findet ihr die optionalen Programmpunkte einzeln. Erst ansehen und abstimmen, dann könnt ihr einen Punkt mit einem Klick für den Reiseplan auswählen. Die Verteilung auf die Tage übernimmt anschließend die Optimierung.</p></div></section>
 <main>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Mi · 10.02.</div><div class="date">Ankunft & historisches Helsinki</div></div></div>
@@ -734,7 +726,9 @@ function updateSelectionFromVotes(data){
  }catch(err){console.error('Abstimmungen:',err);boxes.forEach(b=>b.querySelector('.vote-hint').textContent='Abstimmung momentan nicht erreichbar.');}
  function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 })();
-// Gemeinsamer Reiseplan. Die Punkte werden in Supabase gespeichert und innerhalb eines Tages nach Lage sortiert.
+// Gemeinsamer Reiseplan: Fixpunkte bilden das Gerüst. Optionale Punkte werden
+// zunächst nur als "gewünscht" gespeichert und erst über "Reiseplan optimieren"
+// sinnvoll auf die Tage verteilt.
 const planDays=[
  {key:'Mi',title:'Tag 1 · 10.02.',sub:'',start:{lat:60.1719,lon:24.9414}},
  {key:'Do',title:'Tag 2 · 11.02.',sub:'',start:{lat:60.1719,lon:24.9414}},
@@ -747,7 +741,6 @@ const planAreas={
  'Uspenski-Kathedrale':{area:'Katajanokka',lat:60.1670,lon:24.9580},
  'Marktplatz & Alte Markthalle':{area:'Hafen',lat:60.1674,lon:24.9522},
  'Katajanokka & Esplanadi':{area:'Katajanokka / Zentrum',lat:60.1662,lon:24.9588},
- '☕ Kaffeepause':{area:'flexibel',lat:60.1690,lon:24.9430},
  'Helsinki City Museum':{area:'Kruununhaka',lat:60.1697,lon:24.9523},
  '🥟 Secret Food Tour':{area:'Zentrum',lat:60.1685,lon:24.9410},
  'Suomenlinna':{area:'Suomenlinna',lat:60.1466,lon:24.9880},
@@ -759,7 +752,7 @@ const planAreas={
  'Frühstück':{area:'Hotel / flexibel',lat:60.1680,lon:24.9360},
  'Korkeasaari Zoo':{area:'Korkeasaari',lat:60.1756,lon:25.0065},
  'Kalasatama / REDI':{area:'Kalasatama',lat:60.1880,lon:24.9770},
- '☕ Geburtstags-Kaffeepause':{area:'Zentrum',lat:60.1690,lon:24.9410},
+ '☕ Geburtstags-Kaffeepause':{area:'Korkeasaari',lat:60.1756,lon:25.0065},
  '🎂 Geburtstagsessen':{area:'Zentrum',lat:60.1690,lon:24.9410},
  'Temppeliaukio-Kirche':{area:'Töölö',lat:60.1732,lon:24.9252},
  'Sibelius-Denkmal':{area:'Töölö',lat:60.1826,lon:24.9137},
@@ -772,34 +765,33 @@ const planAreas={
 let planState={};let pendingPlanPoint=null;
 function planInfo(name){return planAreas[name]||{area:'noch nicht zugeordnet',lat:60.169,lon:24.94};}
 function dist(a,b){const dx=(a.lat-b.lat)*111;const dy=(a.lon-b.lon)*55;return Math.sqrt(dx*dx+dy*dy);}
-function optimizePlanItems(items,start){const remaining=items.slice();const out=[];let current=start;while(remaining.length){let best=0,bestD=Infinity;remaining.forEach((x,i)=>{const d=dist(planInfo(x.name),current);if(d<bestD){bestD=d;best=i;}});const next=remaining.splice(best,1)[0];out.push(next);current=planInfo(next.name);}return out;}
 function escapePlan(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const fixedPlan={
  'Mi':[
-   {name:'🚗 Abfahrt Dresden',detail:'07:30 · Start der Reise',area:'Dresden',time:'07:30'},
-   {name:'✈️ Hinflug',detail:'PRG 11:40 → HEL 14:55',area:'Ankunft · Helsinki-Vantaa',time:'11:40'},
-   {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
+  {name:'🚗 Abfahrt Dresden',detail:'07:30 · Start der Reise',area:'Dresden',time:'07:30'},
+  {name:'✈️ Hinflug',detail:'PRG 11:40 → HEL 14:55',area:'Ankunft · Helsinki-Vantaa',time:'11:40'},
+  {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
  ],
  'Do':[
-   {name:'🥟 Secret Food Tour',detail:'Vormittag · fix eingeplant',area:'Zentrum',time:'10:00'},
-   {name:'☕ Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
-   {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
+  {name:'🥟 Secret Food Tour',detail:'Vormittag · fix eingeplant',area:'Zentrum',time:'10:00'},
+  {name:'☕ Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
+  {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
  ],
  'Fr':[
-   {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
-   {name:'Korkeasaari Zoo',detail:'10:00–16:00 · fix eingeplant',area:'Korkeasaari',time:'10:00'},
-   {name:'☕ Geburtstags-Kaffeepause',detail:'15:00 · im Rahmen des Geburtstags',area:'Korkeasaari',time:'15:00'},
-   {name:'🎂 Geburtstagsessen',detail:'19:00 · fix eingeplant',area:'Zentrum',time:'19:00'}
+  {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
+  {name:'Korkeasaari Zoo',detail:'10:00–16:00 · fix eingeplant',area:'Korkeasaari',time:'10:00'},
+  {name:'☕ Geburtstags-Kaffeepause',detail:'15:00 · im Rahmen des Geburtstags',area:'Korkeasaari',time:'15:00'},
+  {name:'🎂 Geburtstagsessen',detail:'19:00 · fix eingeplant',area:'Zentrum',time:'19:00'}
  ],
  'Sa':[
-   {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
-   {name:'☕ Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
-   {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
+  {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
+  {name:'☕ Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
+  {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
  ],
  'So':[
-   {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
-   {name:'☕ Letzte Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
-   {name:'✈️ Rückflug',detail:'HEL 17:35 → PRG 18:50',area:'Abreise · Helsinki-Vantaa',time:'17:35'}
+  {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
+  {name:'☕ Letzte Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
+  {name:'✈️ Rückflug',detail:'HEL 17:35 → PRG 18:50',area:'Abreise · Helsinki-Vantaa',time:'17:35'}
  ]
 };
 function planCheckKey(name,day){return `${day}::${name}`;}
@@ -807,24 +799,102 @@ function getPlanChecks(){try{return JSON.parse(localStorage.getItem('helsinki202
 function savePlanChecks(v){localStorage.setItem('helsinki2027-plan-checks-v1',JSON.stringify(v));updatePlanProgress();}
 function togglePlanCheck(key,checked){const s=getPlanChecks();s[key]=checked;savePlanChecks(s);}
 function updatePlanProgress(){const checks=[...document.querySelectorAll('.plan-check')];const n=checks.filter(c=>c.checked).length;const total=checks.length;const count=document.getElementById('count');const bar=document.getElementById('bar');if(count)count.textContent=`${n} von ${total} geplanten Punkten erledigt`;if(bar)bar.style.width=(total?(n/total*100):0)+'%';checks.forEach(c=>c.closest('.plan-item')?.classList.toggle('plan-done',c.checked));}
-function renderPlan(){const el=document.getElementById('planDays');if(!el)return;el.innerHTML=planDays.map(d=>{const fixed=[...(fixedPlan[d.key]||[])].sort((a,b)=>{
-  const ar=/rückflug/i.test(a.name), br=/rückflug/i.test(b.name);
-  if(ar&&!br)return 1;
-  if(!ar&&br)return -1;
-  return (a.time||'99:99').localeCompare(b.time||'99:99');
-});const fixedNames=new Set(fixed.map(x=>x.name));const items=(planState[d.key]||[]).filter(x=>!fixedNames.has(x.name));const sorted=optimizePlanItems(items,d.start);const rows=[];fixed.forEach(x=>rows.push({x,fixed:true}));sorted.forEach(x=>rows.push({x,fixed:false}));
- const checks=getPlanChecks();
- return `<div class="plan-day"><div class="plan-day-head"><div class="plan-day-title">${escapePlan(d.title)}</div><div class="plan-day-sub">${escapePlan(d.sub)}</div></div><div class="plan-items">${rows.map((row,i)=>{const x=row.x;const key=planCheckKey(x.name,d.key);const checked=!!checks[key];return `<div class="plan-item${row.fixed?' fixed':''}${checked?' plan-done':''}"><input class="plan-check" type="checkbox" data-plan-check="${escapePlan(key)}" ${checked?'checked':''} aria-label="${escapePlan(x.name)} erledigt"><span class="plan-item-order">${i+1}</span><span class="plan-item-name">${escapePlan(x.name)}${row.fixed?'<span class="plan-fixed-label">FIX</span>':''}<small style="display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px">${escapePlan(x.detail)}</small></span><span class="plan-item-area">${escapePlan(x.area)}</span>${row.fixed?'':'<button class="plan-remove" type="button" data-plan-day="'+escapePlan(d.key)+'" data-plan-name="'+escapePlan(x.name)+'" title="Aus Reiseplan entfernen">×</button>'}</div>`}).join('')}${(!rows.length)?'<div class="plan-empty">Noch keine Punkte geplant.</div>':''}</div></div>`;}).join('');
-document.querySelectorAll('.plan-remove').forEach(btn=>btn.onclick=async()=>{const name=btn.dataset.planName;const {error}=await supabaseClient.from('reiseplan').delete().eq('programmpunkt',name);if(error){console.error(error);alert('Der Punkt konnte nicht aus dem Reiseplan entfernt werden.');return;}await loadPlan();});
-document.querySelectorAll('.plan-check').forEach(c=>c.onchange=()=>togglePlanCheck(c.dataset.planCheck,c.checked));updatePlanProgress();
-const warning=document.getElementById('planWarning');if(warning){const mixed=[];planDays.forEach(d=>{const areas=[...(planState[d.key]||[])].map(x=>planInfo(x.name).area).filter(a=>a&&!a.includes('flexibel')&&!a.includes('Hotel')).filter((a,i,arr)=>arr.indexOf(a)===i);if(areas.length>=3)mixed.push(`${d.title}: ${areas.join(', ')}`);});warning.style.display=mixed.length?'block':'none';warning.textContent=mixed.length?'Hinweis: Dieser Tag enthält mehrere Stadtbereiche. Die Reihenfolge wird nach geografischer Nähe sortiert. Für die endgültige Planung berücksichtigen wir zusätzlich Öffnungszeiten, feste Termine und die tatsächlichen Wegezeiten.':'';}}
+function orderedWithFixed(items,dayKey){
+ const fixed=[...(fixedPlan[dayKey]||[])].sort((a,b)=>{
+  const ar=/rückflug/i.test(a.name),br=/rückflug/i.test(b.name);if(ar&&!br)return 1;if(!ar&&br)return -1;return (a.time||'99:99').localeCompare(b.time||'99:99');
+ });
+ const anchors=fixed.filter(x=>!/^🍽️|^☕/.test(x.name)).map(x=>planInfo(x.name));
+ const remaining=items.slice();const out=[];let current=planDays.find(d=>d.key===dayKey)?.start||{lat:60.169,lon:24.94};
+ while(remaining.length){let best=0,bestD=Infinity;remaining.forEach((x,i)=>{const d=dist(planInfo(x.name),current);if(d<bestD){bestD=d;best=i;}});const next=remaining.splice(best,1)[0];out.push(next);current=planInfo(next.name);}
+ // Rückflug bleibt immer ganz am Ende; optionale Punkte werden vor dem ersten passenden Fixpunkt eingefügt.
+ return {fixed,optional:out,anchors};
+}
+function renderPlan(){
+ const el=document.getElementById('planDays');if(!el)return;
+ el.innerHTML=planDays.map(d=>{
+  const fixed=[...(fixedPlan[d.key]||[])].sort((a,b)=>{const ar=/rückflug/i.test(a.name),br=/rückflug/i.test(b.name);if(ar&&!br)return 1;if(!ar&&br)return -1;return (a.time||'99:99').localeCompare(b.time||'99:99');});
+  const fixedNames=new Set(fixed.map(x=>x.name));
+  const items=(planState[d.key]||[]).filter(x=>!fixedNames.has(x.name));
+  const rows=[]; const breakfast=fixed.find(x=>x.name==='Frühstück'); const returnFlight=fixed.find(x=>/Rückflug/i.test(x.name));
+  // Optionale Punkte werden nach ihrem geografischen Verlauf vor dem Abend-/Rückflug platziert.
+  const sorted=orderedWithFixed(items,d.key).optional;
+  fixed.filter(x=>x!==breakfast && x!==returnFlight && /^🚗|^✈️ Hinflug|^🥟|^Korkeasaari|^☕ Geburtstags-Kaffeepause|^🎂/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
+  sorted.forEach(x=>rows.push({x,fixed:false}));
+  fixed.filter(x=>x===breakfast).forEach(x=>rows.unshift({x,fixed:true}));
+  fixed.filter(x=>/^☕ Kaffeepause$|^🍽️ Abendessen$|^☕ Letzte Kaffeepause$/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
+  if(returnFlight)rows.push({x:returnFlight,fixed:true});
+  const checks=getPlanChecks();
+  return `<div class="plan-day"><div class="plan-day-head"><div class="plan-day-title">${escapePlan(d.title)}</div><div class="plan-day-sub">${escapePlan(d.sub)}</div></div><div class="plan-items">${rows.map((row,i)=>{const x=row.x;const key=planCheckKey(x.name,d.key);const checked=!!checks[key];return `<div class="plan-item${row.fixed?' fixed':''}${checked?' plan-done':''}"><input class="plan-check" type="checkbox" data-plan-check="${escapePlan(key)}" ${checked?'checked':''} aria-label="${escapePlan(x.name)} erledigt"><span class="plan-item-order">${i+1}</span><span class="plan-item-name">${escapePlan(x.name)}${row.fixed?'<span class="plan-fixed-label">FIX</span>':''}<small style="display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px">${escapePlan(x.detail)}</small></span><span class="plan-item-area">${escapePlan(x.area)}</span>${row.fixed?'':'<button class="plan-remove" type="button" data-plan-name="'+escapePlan(x.name)+'" title="Aus Reiseplan entfernen">×</button>'}</div>`}).join('')}${!rows.length?'<div class="plan-empty">Noch keine Punkte geplant.</div>':''}</div></div>`;
+ }).join('');
+ document.querySelectorAll('.plan-remove').forEach(btn=>btn.onclick=async()=>{const name=btn.dataset.planName;const {error}=await supabaseClient.from('reiseplan').delete().eq('programmpunkt',name);if(error){alert('Der Punkt konnte nicht aus dem Reiseplan entfernt werden.');return;}await loadPlan();});
+ document.querySelectorAll('.plan-check').forEach(c=>c.onchange=()=>togglePlanCheck(c.dataset.planCheck,c.checked));updatePlanProgress();
+ const warning=document.getElementById('planWarning');if(warning){warning.style.display='none';}
+}
+async function loadPlan(){
+ const {data,error}=await supabaseClient.from('reiseplan').select('programmpunkt,tag,created_at').order('created_at',{ascending:true});
+ if(error){console.error('Reiseplan laden:',error);document.getElementById('planDays').innerHTML='<div class="plan-empty">Der gemeinsame Reiseplan ist noch nicht mit Supabase verbunden.</div>';return;}
+ planState={};(data||[]).forEach(r=>{if(r.tag==='AUTO')return;if(!planState[r.tag])planState[r.tag]=[];planState[r.tag].push({name:r.programmpunkt});});
+ window.planUnassigned=(data||[]).filter(r=>r.tag==='AUTO').map(r=>r.programmpunkt);
+ renderPlan();refreshPlanAssignments();renderOptimizeState();
+}
+function renderOptimizeState(){const box=document.getElementById('planWarning');if(!box)return;const n=(window.planUnassigned||[]).length;if(n){box.style.display='block';box.innerHTML=`<strong>${n} gewünschte${n===1?'r':' Programmpunkte'} noch nicht verteilt.</strong><br>Die Fixpunkte bleiben unverändert. Mit „Reiseplan optimieren“ werden die gewünschten Punkte sinnvoll auf die Tage verteilt.`;}else{box.style.display='none';}}
+async function addPointToPlan(name){
+ const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:name,tag:'AUTO'},{onConflict:'programmpunkt'});
+ if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}
+ await loadPlan();
+}
+async function removePointFromPlan(name){const {error}=await supabaseClient.from('reiseplan').delete().eq('programmpunkt',name);if(error){alert('Der Punkt konnte nicht entfernt werden.');return;}await loadPlan();}
+function refreshPlanAssignments(){
+ document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{
+  if(box.classList.contains('wish-vote-box'))return;
+  const name=box.dataset.programmpunkt;const wrap=box.closest('.body')?.querySelector('.plan-assign');if(!wrap)return;
+  const action=wrap.querySelector('.add-plan-btn');const status=wrap.querySelector('.plan-assign-status');
+  const assignedDay=Object.keys(planState).find(day=>(planState[day]||[]).some(x=>x.name===name));
+  const unassigned=(window.planUnassigned||[]).includes(name);
+  if(assignedDay){status.textContent=`Am ${planDays.find(d=>d.key===assignedDay)?.title.replace(/^Tag \d+ · /,'')||assignedDay} eingeplant.`;action.textContent='✓ Im Reiseplan';action.disabled=true;wrap.classList.add('plan-assigned');}
+  else if(unassigned){status.textContent='Ausgewählt – wird beim nächsten Optimieren sinnvoll verteilt.';action.textContent='✓ Ausgewählt';action.disabled=true;wrap.classList.add('plan-assigned');}
+  else{status.textContent='Noch nicht ausgewählt.';action.textContent='＋ Zum Reiseplan';action.disabled=false;wrap.classList.remove('plan-assigned');}
+ });
+}
+async function optimizePlan(){
+ const names=[...(window.planUnassigned||[])];
+ if(!names.length){alert('Es gibt keine neuen Programmpunkte zu verteilen.');return;}
+ // Greedy-Verteilung: Für jeden Punkt wird der Tag gewählt, der die geringste zusätzliche Wegstrecke erzeugt.
+ const buckets={};planDays.forEach(d=>buckets[d.key]=[]);
+ names.map(n=>({name:n})).sort((a,b)=>dist(planInfo(a.name),{lat:60.169,lon:24.94})-dist(planInfo(b.name),{lat:60.169,lon:24.94}));
+ for(const item of names.map(n=>({name:n}))){
+  let bestDay=planDays[0].key,bestScore=Infinity;
+  for(const d of planDays){
+   const fixed=(fixedPlan[d.key]||[]).filter(x=>!/Frühstück|Kaffeepause|Abendessen/.test(x.name));
+   const anchors=fixed.map(x=>planInfo(x.name));
+   const current=buckets[d.key].map(x=>planInfo(x.name));
+   const pts=[...anchors,...current];
+   const nearest=pts.length?Math.min(...pts.map(p=>dist(planInfo(item.name),p))):dist(planInfo(item.name),d.start);
+   const load=current.length;
+   const score=nearest + load*0.45;
+   if(score<bestScore){bestScore=score;bestDay=d.key;}
+  }
+  buckets[bestDay].push(item);
+ }
+ for(const [day,items] of Object.entries(buckets)){
+  for(const item of items){
+   const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:item.name,tag:day},{onConflict:'programmpunkt'});
+   if(error){console.error(error);alert('Der Reiseplan konnte nicht vollständig optimiert werden.');return;}
+  }
+ }
+ await loadPlan();
+}
+function initPlan(){
+ document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{
+  if(box.classList.contains('wish-vote-box'))return;
+  const name=box.dataset.programmpunkt;const body=box.closest('.body');if(!body||body.querySelector('.plan-assign'))return;
+  const wrap=document.createElement('div');wrap.className='plan-assign';wrap.innerHTML='<div class="plan-assign-top"><span class="plan-assign-label">Reiseplan</span><span class="plan-assign-status"></span></div><div class="plan-assign-controls"><button type="button" class="add-plan-btn">＋ Zum Reiseplan</button></div>';
+  wrap.querySelector('button').onclick=()=>addPointToPlan(name);body.appendChild(wrap);
+ });
+ const opt=document.getElementById('optimizePlanBtn');if(opt)opt.onclick=optimizePlan;
+ loadPlan();
+}
 
-async function loadPlan(){const {data,error}=await supabaseClient.from('reiseplan').select('programmpunkt,tag,created_at').order('created_at',{ascending:true});if(error){console.error('Reiseplan laden:',error);document.getElementById('planDays').innerHTML='<div class="plan-empty">Der gemeinsame Reiseplan ist noch nicht mit Supabase verbunden.</div>';return;}planState={};(data||[]).forEach(r=>{if(!planState[r.tag])planState[r.tag]=[];planState[r.tag].push({name:r.programmpunkt});});renderPlan();refreshPlanAssignments();}
-function openPlanDialog(name){pendingPlanPoint=name;const dialog=document.getElementById('planDialog'),choice=document.getElementById('planDayChoice'),text=document.getElementById('planDialogText');choice.innerHTML=planDays.map(d=>`<option value="${escapePlan(d.key)}">${escapePlan(d.title)} – ${escapePlan(d.sub)}</option>`).join('');const existing=planDays.find(d=>(planState[d.key]||[]).some(x=>x.name===name));if(existing)choice.value=existing.key;text.textContent=`„${name}“ welchem Tag zuordnen? Die App sortiert die Punkte innerhalb des Tages anschließend nach geografischer Nähe.`;dialog.classList.add('open');dialog.setAttribute('aria-hidden','false');}
-function closePlanDialog(){const d=document.getElementById('planDialog');d.classList.remove('open');d.setAttribute('aria-hidden','true');pendingPlanPoint=null;}
-async function addToPlan(){if(!pendingPlanPoint)return;const day=document.getElementById('planDayChoice').value;const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:pendingPlanPoint,tag:day},{onConflict:'programmpunkt'});if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}await loadPlan();closePlanDialog();}
-function refreshPlanAssignments(){document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{if(box.classList.contains('wish-vote-box'))return;const name=box.dataset.programmpunkt;const wrap=box.closest('.body')?.querySelector('.plan-assign');if(!wrap)return;const choice=wrap.querySelector('.plan-inline-choice');const action=wrap.querySelector('.add-plan-btn');const status=wrap.querySelector('.plan-assign-status');const existingDay=Object.keys(planState).find(day=>(planState[day]||[]).some(x=>x.name===name));if(existingDay){choice.value=existingDay;status.textContent=`Am ${planDays.find(d=>d.key===existingDay)?.title.replace(/^\S+ · /,'')||existingDay} geplant. Bei Änderungswunsch bitte neues Datum wählen.`;action.textContent='↻ Datum ändern';wrap.classList.add('plan-assigned');}else{choice.value='';status.textContent='Noch kein Tag gewählt – bitte Wunschtermin auswählen.';action.textContent='＋ Zum Reiseplan';wrap.classList.remove('plan-assigned');}});}
-function initPlan(){document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{if(box.classList.contains('wish-vote-box'))return;const name=box.dataset.programmpunkt;const body=box.closest('.body');if(!body||body.querySelector('.plan-assign'))return;const wrap=document.createElement('div');wrap.className='plan-assign';wrap.innerHTML='<div class="plan-assign-top"><span class="plan-assign-label">Reiseplan</span><span class="plan-assign-status"></span></div><div class="plan-assign-controls"><select class="plan-inline-choice" aria-label="Wunschtermin auswählen"><option value="" disabled selected>Wunschtermin auswählen</option></select><button type="button" class="add-plan-btn">＋ Zum Reiseplan</button></div>';const choice=wrap.querySelector('select');choice.insertAdjacentHTML('beforeend',planDays.map(d=>`<option value="${escapePlan(d.key)}">${escapePlan(d.title)} – ${escapePlan(d.sub)}</option>`).join(''));const existingDay=Object.keys(planState).find(day=>(planState[day]||[]).some(x=>x.name===name));if(existingDay)choice.value=existingDay;const action=wrap.querySelector('button');action.onclick=async()=>{const day=choice.value;if(!day){choice.focus();return;}const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:name,tag:day},{onConflict:'programmpunkt'});if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}await loadPlan();};body.appendChild(wrap);});document.getElementById('planCancel').onclick=closePlanDialog;document.getElementById('planAdd').onclick=addToPlan;document.getElementById('planDialog').addEventListener('click',e=>{if(e.target.id==='planDialog')closePlanDialog();});loadPlan();}
 function flattenOptionalPrograms(){
  const target=document.getElementById('allPrograms');
  const main=document.querySelector('main');
