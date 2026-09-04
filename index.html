@@ -816,12 +816,16 @@ function renderPlan(){
   const fixedNames=new Set(fixed.map(x=>x.name));
   const items=(planState[d.key]||[]).filter(x=>!fixedNames.has(x.name));
   const rows=[]; const breakfast=fixed.find(x=>x.name==='Frühstück'); const returnFlight=fixed.find(x=>/Rückflug/i.test(x.name));
-  // Optionale Punkte werden nach ihrem geografischen Verlauf vor dem Abend-/Rückflug platziert.
   const sorted=orderedWithFixed(items,d.key).optional;
-  fixed.filter(x=>x!==breakfast && x!==returnFlight && /^🚗|^🚕 Abfahrt Hotel → Flughafen|^✈️ Hinflug|^🥟|^Korkeasaari/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
-  sorted.forEach(x=>rows.push({x,fixed:false}));
-  fixed.filter(x=>x===breakfast).forEach(x=>rows.unshift({x,fixed:true}));
-  fixed.filter(x=>/^☕ Kaffeepause$|^🍽️ Abendessen$|^☕ Letzte Kaffeepause$/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
+  // Fixpunkte bleiben chronologisch. Optionale Punkte werden vor den Abend-/Abreisepunkten eingefügt.
+  const middleFixed=fixed.filter(x=>x!==breakfast && x!==returnFlight);
+  const eveningIndex=middleFixed.findIndex(x=>/^(☕ Kaffeepause|☕ Letzte Kaffeepause|🍽️ Abendessen|🎂 Geburtstagsessen)$/.test(x.name));
+  if(breakfast)rows.push({x:breakfast,fixed:true});
+  middleFixed.forEach((x,i)=>{
+    if(i===eveningIndex)sorted.forEach(o=>rows.push({x:o,fixed:false}));
+    rows.push({x,fixed:true});
+  });
+  if(eveningIndex<0)sorted.forEach(o=>rows.push({x:o,fixed:false}));
   if(returnFlight)rows.push({x:returnFlight,fixed:true});
   const checks=getPlanChecks();
   return `<div class="plan-day"><div class="plan-day-head"><div class="plan-day-title">${escapePlan(d.title)}</div><div class="plan-day-sub">${escapePlan(d.sub)}</div></div><div class="plan-items">${rows.map((row,i)=>{const x=row.x;const key=planCheckKey(x.name,d.key);const checked=!!checks[key];return `<div class="plan-item${row.fixed?' fixed':''}${checked?' plan-done':''}"><input class="plan-check" type="checkbox" data-plan-check="${escapePlan(key)}" ${checked?'checked':''} aria-label="${escapePlan(x.name)} erledigt"><span class="plan-item-order">${i+1}</span><span class="plan-item-name">${escapePlan(x.name)}${row.fixed?'<span class="plan-fixed-label">FIX</span>':''}<small style="display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px">${escapePlan(x.detail)}</small></span><span class="plan-item-area">${escapePlan(x.area)}</span>${row.fixed?'':'<button class="plan-remove" type="button" data-plan-name="'+escapePlan(x.name)+'" title="Aus Reiseplan entfernen">×</button>'}</div>`}).join('')}${!rows.length?'<div class="plan-empty">Noch keine Punkte geplant.</div>':''}</div></div>`;
