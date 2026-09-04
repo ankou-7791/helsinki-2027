@@ -37,6 +37,10 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
 .plan-section{max-width:720px;margin:18px auto 26px;padding:0 14px}.plan-box{background:#fff;border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 2px 10px rgba(0,0,0,.035)}.plan-box h2{font-size:21px;margin:0 0 5px}.plan-intro{font-size:13px;color:var(--muted);line-height:1.45;margin:0 0 14px}.plan-days{display:grid;gap:10px}.plan-day{background:#f5f7f6;border-radius:13px;padding:12px}.plan-day-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin-bottom:8px}.plan-day-title{font-size:14px;font-weight:750}.plan-day-sub{font-size:11px;color:var(--muted)}.plan-items{display:grid;gap:6px}.plan-item{display:flex;align-items:center;gap:9px;background:#fff;border:1px solid #e4e7e6;border-radius:9px;padding:8px 9px}.plan-item-order{width:21px;height:21px;border-radius:50%;background:#edf3f2;color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:750;flex:0 0 auto}.plan-item-name{font-size:12px;font-weight:650;flex:1}.plan-item-area{font-size:10px;color:var(--muted)}.plan-remove{border:0;background:transparent;color:#7a4a4a;font-size:14px;padding:3px;cursor:pointer}.plan-empty{font-size:12px;color:var(--muted)}.plan-warning{margin-top:10px;padding:9px 10px;border-radius:10px;background:#f5f1e8;color:#665b36;font-size:11px;line-height:1.4}.add-plan-btn{display:inline-flex;align-items:center;gap:5px;margin-top:10px;border:1px solid #ccd8d8;background:#f7faf9;color:var(--accent);border-radius:9px;padding:7px 9px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.add-plan-btn:hover{background:#edf4f3}.plan-dialog{position:fixed;inset:0;background:rgba(10,20,24,.42);display:none;align-items:flex-end;justify-content:center;z-index:20;padding:12px}.plan-dialog.open{display:flex}.plan-dialog-card{width:min(520px,100%);background:#fff;border-radius:18px;padding:17px;box-shadow:0 12px 40px rgba(0,0,0,.2)}.plan-dialog-card h3{margin:0 0 5px;font-size:18px}.plan-dialog-card p{margin:0 0 12px;color:var(--muted);font-size:12px;line-height:1.4}.plan-day-choice{width:100%;font:inherit;border:1px solid #cfd4d5;border-radius:10px;padding:10px;background:#fafafa}.plan-dialog-actions{display:flex;gap:8px;margin-top:12px}.plan-dialog-actions button{flex:1;border:1px solid var(--line);border-radius:10px;padding:10px;font:inherit;font-weight:700;cursor:pointer}.plan-dialog-actions .primary{background:var(--accent);color:#fff;border-color:var(--accent)}
  .plan-assign{display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:9px;border-top:1px solid #e7ecec}.plan-assign-label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}.plan-inline-choice{flex:1;min-width:0;font:inherit;font-size:11px;border:1px solid #ccd8d8;border-radius:9px;padding:7px;background:#f7faf9}.plan-assign .add-plan-btn{margin-top:0;white-space:nowrap}</style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+.all-programs{max-width:720px;margin:22px auto 0;padding:0 14px}.all-programs-head{padding:0 2px 8px}.all-programs-head h2{font-size:21px;margin:0 0 4px}.all-programs-head p{font-size:12px;color:var(--muted);line-height:1.45;margin:0}.selection-subhead{font-size:13px;font-weight:750;margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--line)}.selection-item.wish-selection{background:#faf9f5}.selection-item-name small{display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px}
+</style>
 </head>
 <body>
 <header>
@@ -74,6 +78,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
     <div class="selection-note">Aktuell aufgenommen werden Favoriten ab 3 × „Muss sein“ sowie gute Optionen mit mindestens 2 × „Muss sein“ und keiner Gegenstimme.</div><div class="removal-box"><h3>Streichkandidaten</h3><p class="removal-intro">Diese Programmpunkte haben aktuell mehr Gegenstimmen als Zustimmung und mindestens zwei „Eher nicht“.</p><div class="removal-list" id="removalList"><div class="removal-empty">Noch keine Streichkandidaten.</div></div></div>
   </div>
 </section>
+<section class="all-programs" id="allPrograms"><div class="all-programs-head"><h2>Alle Programmpunkte</h2><p>Hier findet ihr die vollständige Liste. Abstimmen, abhaken und einem Tag zuordnen könnt ihr direkt am jeweiligen Punkt.</p></div></section>
 <main>
 <section class="day">
 <div class="dayhead"><div><div class="daytitle">Mi · 10.02.</div><div class="date">Ankunft & historisches Helsinki</div></div></div>
@@ -557,6 +562,7 @@ function renderWishes(rows){
    };
  });
  loadWishVotes();
+ updateWishSelection();
 }
 async function loadWishes(){
  const {data,error}=await supabaseClient.from("wuensche").select("id,name,wunsch,created_at").order("created_at",{ascending:false});
@@ -630,6 +636,28 @@ async function loadWishVotes(){
 
 loadWishes();
 
+function escapeHtmlGlobal(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;',"" : '&quot;'}[c]||c));}
+async function updateWishSelection(){
+ const list=document.getElementById('selectionList');
+ if(!list)return;
+ const {data:wishes,error:wErr}=await supabaseClient.from('wuensche').select('id,name,wunsch,created_at').order('created_at',{ascending:false});
+ if(wErr)return;
+ const {data:votes,error:vErr}=await supabaseClient.from('abstimmungen').select('programmpunkt,name,stimme');
+ if(vErr)return;
+ const items=(wishes||[]).map(w=>{
+   const rows=(votes||[]).filter(v=>v.programmpunkt==='__WUNSCH__'+w.id);
+   const muss=rows.filter(v=>v.stimme==='muss').length, egal=rows.filter(v=>v.stimme==='egal').length, nicht=rows.filter(v=>v.stimme==='nicht').length;
+   if(!(muss>=3 || (muss>=2 && nicht===0))) return null;
+   const status=muss>=4?'Gruppenfavorit':muss>=3?'Sehr beliebt':'Gute Option';
+   return {name:w.wunsch,owner:w.name,muss,egal,nicht,status};
+ }).filter(Boolean);
+ const old=document.getElementById('wishSelectionBlock');
+ if(old)old.remove();
+ const block=document.createElement('div'); block.id='wishSelectionBlock'; block.className='selection-wish-block';
+ block.innerHTML='<div class="selection-subhead">Unsere Wünsche</div>'+(items.length?items.map(x=>`<div class="selection-item wish-selection"><div class="selection-item-top"><div><div class="selection-item-name">${escapeHtmlGlobal(x.name)}<small>Wunsch von ${escapeHtmlGlobal(x.owner)}</small></div></div><span class="selection-status">${escapeHtmlGlobal(x.status)}</span></div><div class="selection-meta">👍 ${x.muss} × Muss sein · 🤷 ${x.egal} × Egal · 👎 ${x.nicht} × Eher nicht</div></div>`).join(''):'<div class="selection-empty">Noch kein Wunsch erfüllt die Kriterien für die gemeinsame Auswahl.</div>');
+ list.appendChild(block);
+}
+
 function updateSelectionFromVotes(data){
  const list=document.getElementById('selectionList');
  const removalList=document.getElementById('removalList');
@@ -664,11 +692,12 @@ function updateSelectionFromVotes(data){
   list.innerHTML='<div class="selection-empty">Noch kein Programmpunkt erfüllt die Kriterien für die gemeinsame Auswahl.</div>';
   return;
  }
- list.innerHTML=selected.map(x=>`<div class="selection-item"><div class="selection-item-top"><div><div class="selection-item-name">${escapeHtml(x.name)}</div><div class="selection-day">${escapeHtml(x.dayTitle)}</div></div><span class="selection-status">${escapeHtml(x.status)}</span></div><div class="selection-meta">👍 ${x.muss} × Muss sein · 🤷 ${x.egal} × Egal · 👎 ${x.nicht} × Eher nicht</div></div>`).join('');
+ list.innerHTML=selected.map(x=>`<div class="selection-item"><div class="selection-item-top"><div><div class="selection-item-name">${escapeHtmlGlobal(x.name)}</div><div class="selection-day">${escapeHtml(x.dayTitle)}</div></div><span class="selection-status">${escapeHtmlGlobal(x.status)}</span></div><div class="selection-meta">👍 ${x.muss} × Muss sein · 🤷 ${x.egal} × Egal · 👎 ${x.nicht} × Eher nicht</div></div>`).join('');
  removals.sort((a,b)=>b.nicht-a.nicht || a.muss-b.muss || a.name.localeCompare(b.name,'de'));
  if(removalList){
-  removalList.innerHTML=removals.length ? removals.map(x=>`<div class="removal-item"><div class="removal-item-top"><div><div class="removal-item-name">${escapeHtml(x.name)}</div><div class="removal-day">${escapeHtml(x.dayTitle)}</div></div><span class="removal-status">Eher streichen</span></div><div class="removal-meta">👍 ${x.muss} × Muss sein · 🤷 ${x.egal} × Egal · 👎 ${x.nicht} × Eher nicht</div></div>`).join('') : '<div class="removal-empty">Aktuell gibt es keine Streichkandidaten.</div>';
+  removalList.innerHTML=removals.length ? removals.map(x=>`<div class="removal-item"><div class="removal-item-top"><div><div class="removal-item-name">${escapeHtmlGlobal(x.name)}</div><div class="removal-day">${escapeHtml(x.dayTitle)}</div></div><span class="removal-status">Eher streichen</span></div><div class="removal-meta">👍 ${x.muss} × Muss sein · 🤷 ${x.egal} × Egal · 👎 ${x.nicht} × Eher nicht</div></div>`).join('') : '<div class="removal-empty">Aktuell gibt es keine Streichkandidaten.</div>';
  }
+ updateWishSelection();
 }
 
 // Gemeinsame Abstimmungen über Supabase
@@ -775,6 +804,14 @@ function closePlanDialog(){const d=document.getElementById('planDialog');d.class
 async function addToPlan(){if(!pendingPlanPoint)return;const day=document.getElementById('planDayChoice').value;const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:pendingPlanPoint,tag:day},{onConflict:'programmpunkt'});if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}await loadPlan();closePlanDialog();}
 function initPlan(){document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{if(box.classList.contains('wish-vote-box'))return;const name=box.dataset.programmpunkt;const body=box.closest('.body');if(!body||body.querySelector('.plan-assign'))return;const wrap=document.createElement('div');wrap.className='plan-assign';wrap.innerHTML='<span class="plan-assign-label">Reiseplan:</span><select class="plan-inline-choice"></select><button type="button" class="add-plan-btn">＋ Hinzufügen</button>';const choice=wrap.querySelector('select');choice.innerHTML=planDays.map(d=>`<option value="${escapePlan(d.key)}">${escapePlan(d.title)} – ${escapePlan(d.sub)}</option>`).join('');wrap.querySelector('button').onclick=async()=>{pendingPlanPoint=name;const day=choice.value;const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:name,tag:day},{onConflict:'programmpunkt'});if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}await loadPlan();};body.appendChild(wrap);});document.getElementById('planCancel').onclick=closePlanDialog;document.getElementById('planAdd').onclick=addToPlan;document.getElementById('planDialog').addEventListener('click',e=>{if(e.target.id==='planDialog')closePlanDialog();});loadPlan();}
 initPlan();
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded',()=>{
+ const wishes=document.querySelector('.wishes');
+ const all=document.getElementById('allPrograms');
+ if(wishes&&all) all.parentNode.insertBefore(wishes,all);
+});
 </script>
 </body>
 </html>
