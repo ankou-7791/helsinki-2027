@@ -818,7 +818,7 @@ function renderPlan(){
   const rows=[]; const breakfast=fixed.find(x=>x.name==='Frühstück'); const returnFlight=fixed.find(x=>/Rückflug/i.test(x.name));
   // Optionale Punkte werden nach ihrem geografischen Verlauf vor dem Abend-/Rückflug platziert.
   const sorted=orderedWithFixed(items,d.key).optional;
-  fixed.filter(x=>x!==breakfast && x!==returnFlight && /^🚗|^✈️ Hinflug|^🥟|^Korkeasaari|^☕ Geburtstags-Kaffeepause|^🎂/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
+  fixed.filter(x=>x!==breakfast && x!==returnFlight && /^🚗|^🚕 Abfahrt Hotel → Flughafen|^✈️ Hinflug|^🥟|^Korkeasaari|^☕ Geburtstags-Kaffeepause|^🎂/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
   sorted.forEach(x=>rows.push({x,fixed:false}));
   fixed.filter(x=>x===breakfast).forEach(x=>rows.unshift({x,fixed:true}));
   fixed.filter(x=>/^☕ Kaffeepause$|^🍽️ Abendessen$|^☕ Letzte Kaffeepause$/.test(x.name)).forEach(x=>rows.push({x,fixed:true}));
