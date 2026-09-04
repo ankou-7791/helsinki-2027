@@ -62,7 +62,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
     <h2>Unser Reiseplan</h2>
     <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen. Gewünschte Programmpunkte werden automatisch darum herum sinnvoll auf die Tage verteilt.</p>
     <div class="plan-days" id="planDays"></div>
-    <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div>
+    <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div><div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.4">Planung mit Näherungswerten für Wege. Öffnungszeiten stammen aus aktuell verfügbaren offiziellen Angaben und können sich bis Februar 2027 ändern.</div>
   </div>
 </section>
 <section class="selection" id="selectionSection">
@@ -825,9 +825,25 @@ function savePlanChecks(v){localStorage.setItem('helsinki2027-plan-checks-v1',JS
 function togglePlanCheck(key,checked){const s=getPlanChecks();s[key]=checked;savePlanChecks(s);}
 function updatePlanProgress(){const checks=[...document.querySelectorAll('.plan-check')];const n=checks.filter(c=>c.checked).length;const total=checks.length;const count=document.getElementById('count');const bar=document.getElementById('bar');if(count)count.textContent=`${n} von ${total} geplanten Punkten erledigt`;if(bar)bar.style.width=(total?(n/total*100):0)+'%';checks.forEach(c=>c.closest('.plan-item')?.classList.toggle('plan-done',c.checked));}
 function fixedSorted(dayKey){return [...(fixedPlan[dayKey]||[])].sort((a,b)=>a.startMin-b.startMin);}
+function weekdayFor(dayKey){return ({Mi:'wed',Do:'thu',Fr:'fri',Sa:'sat',So:'sun'})[dayKey]||'any';}
+// Öffnungszeiten: aktuelle offizielle Angaben als Planungsgrundlage.
+// Für Februar 2027 werden sie vor der Reise nochmals geprüft.
+const openingHours={
+ 'Helsinki City Museum':{wed:[660,1140],thu:[660,1140],fri:[660,1140],sat:[660,1020],sun:[660,1020]},
+ 'Oodi – Zentralbibliothek':{wed:[480,1260],thu:[480,1260],fri:[480,1260],sat:[600,1200],sun:[600,1200]},
+ 'Amos Rex':{wed:[660,1200],thu:[660,1200],fri:[660,1200],sat:[660,1020],sun:[660,1020]},
+ '🧖 Allas Sea Pool':{wed:[390,1260],thu:[390,1260],fri:[390,1260],sat:[480,1260],sun:[480,1260]}
+};
+function openWindow(name,dayKey){return openingHours[name]?.[weekdayFor(dayKey)]||null;}
+function fitsOpening(name,dayKey,start,end){const w=openWindow(name,dayKey);return !w||(start>=w[0]&&end<=w[1]);}
+function routeForSlot(slot,items,dayKey){
+ let prev=slot.from,cur=slot.start;const rows=[];let valid=true;
+ for(const item of items){const info=planInfo(item.name);cur+=travelMin(prev,info);const finish=cur+info.duration;if(finish>slot.end||!fitsOpening(item.name,dayKey,cur,finish)){valid=false;break;}rows.push({item,start:cur,end:finish});cur=finish;prev=info;}
+ return {valid,rows,finish:cur};
+}
 function getFeasibleSlots(dayKey){
  const d=planDays.find(x=>x.key===dayKey); const fixed=fixedSorted(dayKey); const slots=[]; let cursor=d.dayStart; let from=d.start;
- fixed.forEach((f,i)=>{
+ fixed.forEach(f=>{
   const gapStart=cursor; const gapEnd=f.startMin;
   if(gapEnd-gapStart>=20)slots.push({start:gapStart,end:gapEnd,from});
   from=planInfo(f.name); cursor=f.endMin;
@@ -839,25 +855,25 @@ function scheduleItems(dayKey,items){
  const fixed=fixedSorted(dayKey); const slots=getFeasibleSlots(dayKey); const assigned=slots.map(s=>({...s,items:[]}));
  const remaining=items.map(x=>({name:x.name}));
  remaining.sort((a,b)=>planInfo(b.name).duration-planInfo(a.name).duration);
+ const unplaced=[];
  for(const item of remaining){
   let best=null;
   assigned.forEach((slot,si)=>{
-   let prev=slot.from; let used=0; let extra=0;
-   slot.items.forEach(x=>{extra+=travelMin(prev,planInfo(x.name));prev=planInfo(x.name);used+=planInfo(x.name).duration;});
-   const addTravel=travelMin(prev,planInfo(item.name));
-   const finish=slot.start+used+extra+addTravel+planInfo(item.name).duration;
-   if(finish<=slot.end){
-    const score=(finish-slot.start)+addTravel*1.8+slot.items.length*20+si*3;
-    if(!best||score<best.score)best={si,score};
+   for(let pos=0;pos<=slot.items.length;pos++){
+    const trial=[...slot.items.slice(0,pos),item,...slot.items.slice(pos)];
+    const route=routeForSlot(slot,trial,dayKey); if(!route.valid)continue;
+    const travelUsed=Math.max(0,route.finish-slot.start-trial.reduce((sum,x)=>sum+planInfo(x.name).duration,0));
+    const slack=slot.end-route.finish;
+    const score=travelUsed*1.8+slack*0.025+trial.length*4+si*2;
+    if(!best||score<best.score)best={si,pos,score};
    }
   });
-  if(best)assigned[best.si].items.push(item); else return {ok:false,unplaced:remaining.filter(x=>!assigned.some(s=>s.items.includes(x)))};
+  if(best)assigned[best.si].items.splice(best.pos,0,item);else unplaced.push(item);
  }
- const rows=[];
- let slotIndex=0;
- for(const f of fixed){const slot=assigned[slotIndex++]; if(slot){let prev=slot.from,cur=slot.start; for(const item of slot.items){cur+=travelMin(prev,planInfo(item.name)); rows.push({x:{name:item.name,detail:`${hm(cur)} · ca. ${planInfo(item.name).duration} Min.`,area:planInfo(item.name).area},fixed:false});cur+=planInfo(item.name).duration;prev=planInfo(item.name);} } rows.push({x:f,fixed:true});}
- const last=assigned[assigned.length-1]; if(last&&slotIndex<assigned.length){let prev=last.from,cur=last.start;for(const item of last.items){cur+=travelMin(prev,planInfo(item.name));rows.push({x:{name:item.name,detail:`${hm(cur)} · ca. ${planInfo(item.name).duration} Min.`,area:planInfo(item.name).area},fixed:false});cur+=planInfo(item.name).duration;prev=planInfo(item.name);}}
- return {ok:true,rows};
+ const rows=[]; let slotIndex=0;
+ for(const f of fixed){const slot=assigned[slotIndex++]; if(slot){const route=routeForSlot(slot,slot.items,dayKey);for(const r of route.rows){rows.push({x:{name:r.item.name,detail:`${hm(r.start)} · ca. ${planInfo(r.item.name).duration} Min.`,area:planInfo(r.item.name).area},fixed:false});}} rows.push({x:f,fixed:true});}
+ while(slotIndex<assigned.length){const slot=assigned[slotIndex++];const route=routeForSlot(slot,slot.items,dayKey);for(const r of route.rows){rows.push({x:{name:r.item.name,detail:`${hm(r.start)} · ca. ${planInfo(r.item.name).duration} Min.`,area:planInfo(r.item.name).area},fixed:false});}}
+ return {ok:unplaced.length===0,rows,unplaced};
 }
 function orderedWithFixed(items,dayKey){const s=scheduleItems(dayKey,items);return s.ok?s.rows.map(r=>r.x):items;}
 function renderPlan(){
@@ -865,9 +881,9 @@ function renderPlan(){
  el.innerHTML=planDays.map(d=>{
   const fixedNames=new Set(fixedSorted(d.key).map(x=>x.name));
   const items=(planState[d.key]||[]).filter(x=>!fixedNames.has(x.name));
-  const sched=scheduleItems(d.key,items); const rows=sched.ok?sched.rows:fixedSorted(d.key).map(x=>({x,fixed:true}));
+  const sched=scheduleItems(d.key,items); const rows=sched.rows;
   const checks=getPlanChecks();
-  return `<div class="plan-day"><div class="plan-day-head"><div class="plan-day-title">${escapePlan(d.title)}</div><div class="plan-day-sub">${escapePlan(d.sub)}</div></div><div class="plan-items">${rows.map((row,i)=>{const x=row.x;const key=planCheckKey(x.name,d.key);const checked=!!checks[key];return `<div class="plan-item${row.fixed?' fixed':''}${checked?' plan-done':''}"><input class="plan-check" type="checkbox" data-plan-check="${escapePlan(key)}" ${checked?'checked':''} aria-label="${escapePlan(x.name)} erledigt"><span class="plan-item-order">${i+1}</span><span class="plan-item-name">${escapePlan(x.name)}${row.fixed?'<span class="plan-fixed-label">FIX</span>':''}<small style="display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px">${escapePlan(x.detail)}</small></span><span class="plan-item-area">${escapePlan(x.area)}</span>${row.fixed?'':'<button class="plan-remove" type="button" data-plan-name="'+escapePlan(x.name)+'" title="Aus Reiseplan entfernen">×</button>'}</div>`}).join('')}${!rows.length?'<div class="plan-empty">Noch keine Punkte geplant.</div>':''}</div>${!sched.ok&&items.length?'<div class="plan-empty">Nicht alle ausgewählten Punkte passen zeitlich in diesen Tag.</div>':''}</div>`;
+  return `<div class="plan-day"><div class="plan-day-head"><div class="plan-day-title">${escapePlan(d.title)}</div><div class="plan-day-sub">${escapePlan(d.sub)}</div></div><div class="plan-items">${rows.map((row,i)=>{const x=row.x;const key=planCheckKey(x.name,d.key);const checked=!!checks[key];return `<div class="plan-item${row.fixed?' fixed':''}${checked?' plan-done':''}"><input class="plan-check" type="checkbox" data-plan-check="${escapePlan(key)}" ${checked?'checked':''} aria-label="${escapePlan(x.name)} erledigt"><span class="plan-item-order">${i+1}</span><span class="plan-item-name">${escapePlan(x.name)}${row.fixed?'<span class="plan-fixed-label">FIX</span>':''}<small style="display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px">${escapePlan(x.detail)}</small></span><span class="plan-item-area">${escapePlan(x.area)}</span>${row.fixed?'':'<button class="plan-remove" type="button" data-plan-name="'+escapePlan(x.name)+'" title="Aus Reiseplan entfernen">×</button>'}</div>`}).join('')}${!rows.length?'<div class="plan-empty">Noch keine Punkte geplant.</div>':''}</div>${!sched.ok?'<div class="plan-empty">Nicht alle ausgewählten Punkte passen mit Zeiten, Wegen oder Öffnungszeiten in diesen Tag.</div>':''}</div>`;
  }).join('');
  document.querySelectorAll('.plan-remove').forEach(btn=>btn.onclick=async()=>{const name=btn.dataset.planName;const {error}=await supabaseClient.from('reiseplan').delete().eq('programmpunkt',name);if(error){alert('Der Punkt konnte nicht aus dem Reiseplan entfernt werden.');return;}await loadPlan();});
  document.querySelectorAll('.plan-check').forEach(c=>c.onchange=()=>togglePlanCheck(c.dataset.planCheck,c.checked));updatePlanProgress();
@@ -880,27 +896,27 @@ async function loadPlan(){
  window.planUnassigned=(data||[]).filter(r=>r.tag==='AUTO').map(r=>r.programmpunkt);
  renderPlan();refreshPlanAssignments();renderOptimizeState();
 }
-function renderOptimizeState(){const box=document.getElementById('planWarning');if(!box)return;const n=(window.planUnassigned||[]).length;if(n){box.style.display='block';box.innerHTML=`<strong>${n} gewünschte${n===1?'r':' Programmpunkte'} noch nicht verteilt.</strong><br>Die Optimierung berücksichtigt jetzt Tageszeiten, Fixpunkte, Aufenthaltsdauer und Wege – Fixpunkte bleiben unverändert.`;}else{box.style.display='none';}}
+function renderOptimizeState(){const box=document.getElementById('planWarning');if(!box)return;const n=(window.planUnassigned||[]).length;if(n){box.style.display='block';box.innerHTML=`<strong>${n} gewünschte${n===1?'r':' Programmpunkte'} noch nicht verteilt.</strong><br>Die Optimierung berücksichtigt Tageszeiten, Fixpunkte, Aufenthaltsdauer, Wege und hinterlegte Öffnungszeiten. Öffnungszeiten für 2027 bitte vor der Reise nochmals prüfen.`;}else{box.style.display='none';}}
 async function addPointToPlan(name){const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:name,tag:'AUTO'},{onConflict:'programmpunkt'});if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}await loadPlan();}
 async function removePointFromPlan(name){const {error}=await supabaseClient.from('reiseplan').delete().eq('programmpunkt',name);if(error){alert('Der Punkt konnte nicht entfernt werden.');return;}await loadPlan();}
 function refreshPlanAssignments(){document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{if(box.classList.contains('wish-vote-box'))return;const name=box.dataset.programmpunkt;const wrap=box.closest('.body')?.querySelector('.plan-assign');if(!wrap)return;const action=wrap.querySelector('.add-plan-btn');const status=wrap.querySelector('.plan-assign-status');const assignedDay=Object.keys(planState).find(day=>(planState[day]||[]).some(x=>x.name===name));const unassigned=(window.planUnassigned||[]).includes(name);if(assignedDay){status.textContent=`Am ${planDays.find(d=>d.key===assignedDay)?.title.replace(/^Tag \d+ · /,'')||assignedDay} eingeplant.`;action.textContent='✓ Im Reiseplan';action.disabled=true;wrap.classList.add('plan-assigned');}else if(unassigned){status.textContent='Ausgewählt – wird beim nächsten Optimieren sinnvoll verteilt.';action.textContent='✓ Ausgewählt';action.disabled=true;wrap.classList.add('plan-assigned');}else{status.textContent='Noch nicht ausgewählt.';action.textContent='＋ Zum Reiseplan';action.disabled=false;wrap.classList.remove('plan-assigned');}});}
 function candidateScore(name,dayKey,bucket){
  const d=planDays.find(x=>x.key===dayKey); const meta=optionalMeta[name]; if(meta?.days&&!meta.days.includes(dayKey))return Infinity;
- const items=bucket.map(x=>x.name); const test=scheduleItems(dayKey,[...bucket,{name}]); if(!test.ok)return Infinity;
- const info=planInfo(name); let anchor=d.start; let nearest=dist(info,anchor); const fixed=fixedSorted(dayKey); fixed.forEach(f=>{const p=planInfo(f.name);nearest=Math.min(nearest,dist(info,p));});
- const dayLoad=items.reduce((sum,x)=>sum+planInfo(x.name).duration,0); const routePenalty=dayLoad/180;
- return nearest*1.8+routePenalty+Math.max(0,items.length-2)*0.7;
+ const test=scheduleItems(dayKey,[...bucket,{name}]); if(!test.ok)return Infinity;
+ const info=planInfo(name); const fixed=fixedSorted(dayKey); const nearest=Math.min(dist(info,d.start),...fixed.map(f=>dist(info,planInfo(f.name))));
+ const dayLoad=bucket.reduce((sum,x)=>sum+planInfo(x.name).duration,0); const routePenalty=dayLoad/180;
+ return nearest*1.4+routePenalty+Math.max(0,bucket.length-2)*0.7;
 }
 async function optimizePlan(){
  const names=[...(window.planUnassigned||[])]; if(!names.length){alert('Es gibt keine neuen Programmpunkte zu verteilen.');return;}
  const buckets={};planDays.forEach(d=>buckets[d.key]=[]);
  const ordered=names.map(name=>({name})).sort((a,b)=>planInfo(b.name).duration-planInfo(a.name).duration);
  const failed=[];
- for(const item of ordered){let bestDay=null,bestScore=Infinity;for(const d of planDays){const score=candidateScore(item.name,d.key,buckets[d.key]);if(score<bestScore){bestScore=score;bestDay=d.key;}}if(bestDay){buckets[bestDay].push(item);}else failed.push(item.name);}
+ for(const item of ordered){let bestDay=null,bestScore=Infinity;for(const d of planDays){const score=candidateScore(item.name,d.key,buckets[d.key]);if(score<bestScore){bestScore=score;bestDay=d.key;}}if(bestDay)buckets[bestDay].push(item);else failed.push(item.name);}
  const updates=[];Object.entries(buckets).forEach(([day,items])=>items.forEach(x=>updates.push({programmpunkt:x.name,tag:day})));
  for(const row of updates){const {error}=await supabaseClient.from('reiseplan').upsert(row,{onConflict:'programmpunkt'});if(error){console.error(error);alert('Der Reiseplan konnte nicht vollständig optimiert werden.');return;}}
  await loadPlan();
- if(failed.length)alert(`Diese Punkte konnten wegen Zeit-/Tagesgrenzen nicht sinnvoll eingeplant werden: ${failed.join(', ')}`);
+ if(failed.length)alert(`Diese Punkte konnten wegen Tages-, Zeit- oder Öffnungsgrenzen nicht sinnvoll eingeplant werden: ${failed.join(', ')}`);
 }
 function initPlan(){
  document.querySelectorAll('.vote-box[data-programmpunkt]').forEach(box=>{
