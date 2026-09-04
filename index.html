@@ -142,20 +142,6 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
   <div class="vote-results"></div><div class="vote-summary"></div>
   <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
 </div></div></div></div></div>
-<div class="card"><div class="body"><div class="row"><div><p class="name">☕ Kaffeepause</p><div class="desc">Erster finnischer Kaffee-Stopp – ideal mit Korvapuusti oder Karjalanpiirakka.</div><span class="tag">KAFFEE</span>
-<div class="vote-box" data-programmpunkt="☕ Kaffeepause">
-  <div class="vote-title">Eure gemeinsame Abstimmung</div>
-  <div class="vote-line"><label>Du bist:</label><select class="voter-select" aria-label="Name auswählen">
-    <option value="">Bitte auswählen</option><option>Manja</option><option>Frank</option><option>Nadine</option><option>Steffen</option>
-  </select></div>
-  <div class="vote-buttons">
-    <button class="vote-btn" data-vote="muss" type="button">👍 Muss sein</button>
-    <button class="vote-btn" data-vote="egal" type="button">🤷 Egal</button>
-    <button class="vote-btn" data-vote="nicht" type="button">👎 Eher nicht</button>
-  </div>
-  <div class="vote-results"></div><div class="vote-summary"></div>
-  <div class="vote-hint">Eure Stimmen werden gemeinsam gespeichert.</div>
-</div></div></div></div></div>
 <div class="card"><img class="full-photo" loading="lazy" referrerpolicy="no-referrer" src="https://commons.wikimedia.org/wiki/Special:FilePath/Helsinki_City_Museum_main_building_01.jpg?width=1400"><div class="body"><div class="row"><div><p class="name">Helsinki City Museum</p><div class="desc">Kompakter Einstieg in die Geschichte der Stadt, direkt am Senatsplatz.</div><span class="tag">KULTUR</span>
 <div class="vote-box" data-programmpunkt="Helsinki City Museum">
   <div class="vote-title">Eure gemeinsame Abstimmung</div>
@@ -652,7 +638,8 @@ function updateSelectionFromVotes(data){
  const list=document.getElementById('selectionList');
  const removalList=document.getElementById('removalList');
  if(!list)return;
- const boxes=[...document.querySelectorAll('.vote-box[data-programmpunkt]')].filter(b=>!b.classList.contains('wish-vote-box'));
+ const fixedNamesAll=new Set(Object.values(fixedPlan||{}).flat().map(x=>x.name));
+ const boxes=[...document.querySelectorAll('.vote-box[data-programmpunkt]')].filter(b=>!b.classList.contains('wish-vote-box') && !fixedNamesAll.has(b.dataset.programmpunkt));
  const selected=[];
  const removals=[];
  boxes.forEach(box=>{
@@ -791,7 +778,6 @@ const fixedPlan={
  'Mi':[
    {name:'🚗 Abfahrt Dresden',detail:'07:30 · Start der Reise',area:'Dresden',time:'07:30'},
    {name:'✈️ Hinflug',detail:'PRG 11:40 → HEL 14:55',area:'Ankunft · Helsinki-Vantaa',time:'11:40'},
-   {name:'☕ Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
    {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
  ],
  'Do':[
@@ -821,7 +807,12 @@ function getPlanChecks(){try{return JSON.parse(localStorage.getItem('helsinki202
 function savePlanChecks(v){localStorage.setItem('helsinki2027-plan-checks-v1',JSON.stringify(v));updatePlanProgress();}
 function togglePlanCheck(key,checked){const s=getPlanChecks();s[key]=checked;savePlanChecks(s);}
 function updatePlanProgress(){const checks=[...document.querySelectorAll('.plan-check')];const n=checks.filter(c=>c.checked).length;const total=checks.length;const count=document.getElementById('count');const bar=document.getElementById('bar');if(count)count.textContent=`${n} von ${total} geplanten Punkten erledigt`;if(bar)bar.style.width=(total?(n/total*100):0)+'%';checks.forEach(c=>c.closest('.plan-item')?.classList.toggle('plan-done',c.checked));}
-function renderPlan(){const el=document.getElementById('planDays');if(!el)return;el.innerHTML=planDays.map(d=>{const fixed=[...(fixedPlan[d.key]||[])].sort((a,b)=>{if(/rückflug/i.test(a.name))return 1;if(/rückflug/i.test(b.name))return -1;return (a.time||'99:99').localeCompare(b.time||'99:99');});const fixedNames=new Set(fixed.map(x=>x.name));const items=(planState[d.key]||[]).filter(x=>!fixedNames.has(x.name));const sorted=optimizePlanItems(items,d.start);const rows=[];fixed.forEach(x=>rows.push({x,fixed:true}));sorted.forEach(x=>rows.push({x,fixed:false}));
+function renderPlan(){const el=document.getElementById('planDays');if(!el)return;el.innerHTML=planDays.map(d=>{const fixed=[...(fixedPlan[d.key]||[])].sort((a,b)=>{
+  const ar=/rückflug/i.test(a.name), br=/rückflug/i.test(b.name);
+  if(ar&&!br)return 1;
+  if(!ar&&br)return -1;
+  return (a.time||'99:99').localeCompare(b.time||'99:99');
+});const fixedNames=new Set(fixed.map(x=>x.name));const items=(planState[d.key]||[]).filter(x=>!fixedNames.has(x.name));const sorted=optimizePlanItems(items,d.start);const rows=[];fixed.forEach(x=>rows.push({x,fixed:true}));sorted.forEach(x=>rows.push({x,fixed:false}));
  const checks=getPlanChecks();
  return `<div class="plan-day"><div class="plan-day-head"><div class="plan-day-title">${escapePlan(d.title)}</div><div class="plan-day-sub">${escapePlan(d.sub)}</div></div><div class="plan-items">${rows.map((row,i)=>{const x=row.x;const key=planCheckKey(x.name,d.key);const checked=!!checks[key];return `<div class="plan-item${row.fixed?' fixed':''}${checked?' plan-done':''}"><input class="plan-check" type="checkbox" data-plan-check="${escapePlan(key)}" ${checked?'checked':''} aria-label="${escapePlan(x.name)} erledigt"><span class="plan-item-order">${i+1}</span><span class="plan-item-name">${escapePlan(x.name)}${row.fixed?'<span class="plan-fixed-label">FIX</span>':''}<small style="display:block;font-size:10px;font-weight:500;color:var(--muted);margin-top:2px">${escapePlan(x.detail)}</small></span><span class="plan-item-area">${escapePlan(x.area)}</span>${row.fixed?'':'<button class="plan-remove" type="button" data-plan-day="'+escapePlan(d.key)+'" data-plan-name="'+escapePlan(x.name)+'" title="Aus Reiseplan entfernen">×</button>'}</div>`}).join('')}${(!rows.length)?'<div class="plan-empty">Noch keine Punkte geplant.</div>':''}</div></div>`;}).join('');
 document.querySelectorAll('.plan-remove').forEach(btn=>btn.onclick=async()=>{const name=btn.dataset.planName;const {error}=await supabaseClient.from('reiseplan').delete().eq('programmpunkt',name);if(error){console.error(error);alert('Der Punkt konnte nicht aus dem Reiseplan entfernt werden.');return;}await loadPlan();});
