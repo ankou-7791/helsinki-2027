@@ -789,7 +789,7 @@ function optimizePlanItems(items,start){const remaining=items.slice();const out=
 function escapePlan(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 const fixedPlan={
  'Mi':[
-   {name:'Frühstück',detail:'08:30',area:'Grundgerüst',time:'08:30'},
+   {name:'🚗 Abfahrt Dresden',detail:'07:30 · Start der Reise',area:'Dresden',time:'07:30'},
    {name:'✈️ Hinflug',detail:'PRG 11:40 → HEL 14:55',area:'Ankunft · Helsinki-Vantaa',time:'11:40'},
    {name:'☕ Kaffeepause',detail:'15:00',area:'Grundgerüst',time:'15:00'},
    {name:'🍽️ Abendessen',detail:'19:00',area:'Grundgerüst',time:'19:00'}
