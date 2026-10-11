@@ -948,11 +948,17 @@ function renderPlan(){
  const warning=document.getElementById('planWarning');if(warning){warning.style.display='none';}
 }
 async function loadPlan(){
- const {data,error}=await supabaseClient.from('reiseplan').select('programmpunkt,tag,created_at').order('created_at',{ascending:true});
- if(error){console.error('Reiseplan laden:',error);document.getElementById('planDays').innerHTML='<div class="plan-empty">Der gemeinsame Reiseplan ist noch nicht mit Supabase verbunden.</div>';return;}
- planState={};(data||[]).forEach(r=>{if(r.tag==='AUTO')return;if(!planState[r.tag])planState[r.tag]=[];planState[r.tag].push({name:r.programmpunkt});});
- window.planUnassigned=(data||[]).filter(r=>r.tag==='AUTO').map(r=>r.programmpunkt);
- renderPlan();refreshPlanAssignments();renderOptimizeState();
+ const el=document.getElementById('planDays');
+ try{
+  const {data,error}=await supabaseClient.from('reiseplan').select('programmpunkt,tag,created_at').order('created_at',{ascending:true});
+  if(error)throw error;
+  planState={};(data||[]).forEach(r=>{if(r.tag==='AUTO')return;if(!planState[r.tag])planState[r.tag]=[];planState[r.tag].push({name:r.programmpunkt});});
+  window.planUnassigned=(data||[]).filter(r=>r.tag==='AUTO').map(r=>r.programmpunkt);
+  renderPlan();refreshPlanAssignments();renderOptimizeState();
+ }catch(error){
+  console.error('Reiseplan laden:',error);
+  if(el){const detail=[error?.code,error?.message,error?.details].filter(Boolean).join(' · ');el.innerHTML='<div class="plan-empty"><strong>Der gemeinsame Reiseplan konnte nicht geladen werden.</strong><br>Die Abstimmungen und Wünsche werden dadurch nicht gelöscht. Technischer Hinweis: '+escapePlan(detail||'Netzwerk- oder Supabase-Fehler')+'</div>';}
+ }
 }
 function renderOptimizeState(){const box=document.getElementById('planWarning');if(!box)return;const n=(window.planUnassigned||[]).length;if(n){box.style.display='block';box.innerHTML=`<strong>${n} gewünschte${n===1?'r':' Programmpunkte'} noch nicht verteilt.</strong><br>Die Optimierung berücksichtigt Tageszeiten, Fixpunkte, Aufenthaltsdauer, Wege und hinterlegte Öffnungszeiten. Öffnungszeiten für 2027 bitte vor der Reise nochmals prüfen.`;}else{box.style.display='none';}}
 async function addPointToPlan(name){const {error}=await supabaseClient.from('reiseplan').upsert({programmpunkt:name,tag:'AUTO'},{onConflict:'programmpunkt'});if(error){console.error('Reiseplan speichern:',error);alert('Der Punkt konnte nicht zum Reiseplan hinzugefügt werden. Bitte prüfe die Supabase-Tabelle.');return;}await loadPlan();}
