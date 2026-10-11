@@ -38,6 +38,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
  .plan-assign{display:flex;align-items:center;gap:7px;margin-top:10px;padding-top:9px;border-top:1px solid #e7ecec}.plan-assign-label{font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap}.plan-inline-choice{flex:1;min-width:0;font:inherit;font-size:11px;border:1px solid #ccd8d8;border-radius:9px;padding:7px;background:#f7faf9}.plan-assign .add-plan-btn{margin-top:0;white-space:nowrap}
 .plan-assigned{margin-top:10px}.plan-assigned .plan-inline-choice{font-weight:600}.plan-assigned .add-plan-btn{font-size:12px}
 .plan-assign{display:block}.plan-assign-top{display:flex;align-items:baseline;gap:8px;margin-bottom:7px}.plan-assign-status{font-size:11px;color:var(--muted);line-height:1.35}.plan-assign-controls{display:flex;align-items:center;gap:7px}.plan-assign-controls .plan-inline-choice{flex:1}.plan-assigned .plan-assign-status{color:#47635e}.plan-assigned .plan-inline-choice{font-weight:600}
+.activity-tools{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0 0 12px}.activity-button{border:1px solid #ccd8d8;background:#f7faf9;color:var(--accent);border-radius:9px;padding:7px 10px;font:inherit;font-size:11px;font-weight:700;cursor:pointer}.activity-button:disabled{opacity:.6;cursor:wait}.activity-status{font-size:11px;color:var(--muted);line-height:1.4}
  .plan-actions{display:flex;justify-content:flex-end;margin-top:12px}.plan-actions button{border:0;border-radius:10px;padding:10px 14px;font:inherit;font-weight:750;cursor:pointer}.plan-actions .primary{background:var(--accent);color:#fff}.plan-assign-controls{display:flex;gap:8px}.add-plan-btn{border:1px solid var(--line);background:#fff;border-radius:10px;padding:9px 12px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}.add-plan-btn:disabled{opacity:.65;cursor:default}.plan-assign-status{font-size:11px;color:var(--muted)} </style>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -61,6 +62,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
   <div class="plan-box">
     <h2>Unser Reiseplan</h2>
     <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen. Gewünschte Programmpunkte werden automatisch darum herum sinnvoll auf die Tage verteilt.</p>
+    <div class="activity-tools"><button type="button" class="activity-button" id="activityButton">Supabase-Aktivität senden</button><span class="activity-status" id="activityStatus">Bei geringer Nutzung möglichst täglich klicken: Es werden drei reine Leseanfragen gesendet, keine Daten geändert. Eine automatische Pause lässt sich damit nicht sicher ausschließen.</span></div>
     <div class="plan-days" id="planDays"></div>
     <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div><div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.4">Planung mit gerouteten Fußwegen, Tageszeiten, Aufenthaltsdauern und hinterlegten Öffnungszeiten. Öffnungszeiten für 2027 bitte vor der Reise nochmals prüfen.</div>
   </div>
@@ -515,6 +517,27 @@ function supabaseDiagnostic(error,operation){
   parts.push('Browser online: '+(navigator.onLine?'ja':'nein'));
  }
  return parts.join(' · ');
+}
+async function sendSupabaseActivity(){
+ const button=document.getElementById('activityButton');
+ const status=document.getElementById('activityStatus');
+ if(!button||!status)return;
+ button.disabled=true;
+ status.textContent='Prüfe Supabase mit drei Leseanfragen …';
+ try{
+  if(!supabaseClient)throw new Error('Supabase-JavaScriptbibliothek nicht geladen');
+  const results=await Promise.allSettled([
+   supabaseClient.from('abstimmungen').select('programmpunkt').limit(1),
+   supabaseClient.from('wuensche').select('id').limit(1),
+   supabaseClient.from('reiseplan').select('programmpunkt').limit(1)
+  ]);
+  const failure=results.find(r=>r.status==='rejected'||r.value?.error);
+  if(failure){const error=failure.status==='rejected'?failure.reason:failure.value.error;throw error;}
+  status.textContent='Supabase hat alle drei Leseanfragen beantwortet; es wurden keine Daten geändert. Bei geringer Nutzung möglichst täglich klicken. Eine automatische Pause wird dadurch nicht garantiert verhindert.';
+ }catch(error){
+  console.error('Supabase-Aktivität:',error);
+  status.textContent=supabaseDiagnostic(error,'Aktivitätsabfrage');
+ }finally{button.disabled=false;}
 }
 const wishForm=document.getElementById("wishForm");
 const wishName=document.getElementById("wishName");
@@ -1096,6 +1119,7 @@ function flattenOptionalPrograms(){
 
 initPlan();
 flattenOptionalPrograms();
+document.getElementById('activityButton')?.addEventListener('click',sendSupabaseActivity);
 </script>
 
 </body>
