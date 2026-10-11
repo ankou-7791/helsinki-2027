@@ -498,7 +498,24 @@ function resetAll(){const checks=getPlanChecks();Object.keys(checks).forEach(k=>
 // Gemeinsame Wunschliste über Supabase
 const SUPABASE_URL="https://msqkztlyibmuycsumvur.supabase.co";
 const SUPABASE_KEY="sb_publishable_OvZ3pHYT16Xz1c67W8J3uw_BCCGmVwQ";
-const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+// Keep the page usable when the Supabase SDK CDN is blocked, and report that
+// separately from failures returned by Supabase itself.
+const supabaseClient=window.supabase?.createClient ? window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY) : null;
+function supabaseDiagnostic(error,operation){
+ const parts=[operation];
+ if(error?.name)parts.push(error.name);
+ if(error?.message)parts.push(error.message);
+ if(error?.code)parts.push('Code '+error.code);
+ if(error?.status)parts.push('HTTP '+error.status);
+ if(error?.details)parts.push(error.details);
+ if(error?.hint)parts.push('Hinweis: '+error.hint);
+ if(!supabaseClient)parts.push('Supabase-JavaScriptbibliothek fehlt (CDN nicht geladen).');
+ if(error?.name==='TypeError' && /load failed|failed to fetch|networkerror/i.test(error?.message||'')){
+  parts.push('Der Browser erhielt keine HTTP-Antwort von Supabase; mögliche Ursachen: Netzwerk/DNS, TLS, CORS oder ein Inhaltsblocker.');
+  parts.push('Browser online: '+(navigator.onLine?'ja':'nein'));
+ }
+ return parts.join(' · ');
+}
 const wishForm=document.getElementById("wishForm");
 const wishName=document.getElementById("wishName");
 const wishText=document.getElementById("wishText");
@@ -544,9 +561,12 @@ function renderWishes(rows){
  updateWishSelection();
 }
 async function loadWishes(){
+ if(!supabaseClient){wishList.innerHTML='<div class="empty">'+escapeHtml(supabaseDiagnostic(new Error('SDK nicht verfügbar'),'Wunschliste'))+'</div>';return;}
+ try{
  const {data,error}=await supabaseClient.from("wuensche").select("id,name,wunsch,created_at").order("created_at",{ascending:false});
- if(error){wishList.innerHTML='<div class="empty">Die Wunschliste konnte gerade nicht geladen werden.</div>'; console.error(error); return;}
+ if(error)throw error;
  renderWishes(data||[]);
+ }catch(error){console.error('Wunschliste laden:',error);wishList.innerHTML='<div class="empty">'+escapeHtml(supabaseDiagnostic(error,'Wunschliste laden'))+'</div>';}
 }
 
 wishForm.addEventListener("submit",async e=>{
@@ -734,7 +754,7 @@ function updateSelectionFromVotes(data){
    }));
   });
   await loadVotes();
- }catch(err){console.error('Abstimmungen:',err);boxes.forEach(b=>b.querySelector('.vote-hint').textContent='Abstimmung momentan nicht erreichbar.');}
+ }catch(err){const detail=supabaseDiagnostic(err,'Abstimmungen laden');console.error(detail,err);boxes.forEach(b=>{const hint=b.querySelector('.vote-hint');if(hint)hint.textContent=detail;});}
  function escapeHtml(v){return String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));}
 })();
 // Gemeinsamer Reiseplan: Fixpunkte bilden das Gerüst. Optionale Punkte werden
@@ -956,8 +976,9 @@ async function loadPlan(){
   window.planUnassigned=(data||[]).filter(r=>r.tag==='AUTO').map(r=>r.programmpunkt);
   renderPlan();refreshPlanAssignments();renderOptimizeState();
  }catch(error){
-  console.error('Reiseplan laden:',error);
-  if(el){const detail=[error?.code,error?.message,error?.details].filter(Boolean).join(' · ');el.innerHTML='<div class="plan-empty"><strong>Der gemeinsame Reiseplan konnte nicht geladen werden.</strong><br>Die Abstimmungen und Wünsche werden dadurch nicht gelöscht. Technischer Hinweis: '+escapePlan(detail||'Netzwerk- oder Supabase-Fehler')+'</div>';}
+  const detail=supabaseDiagnostic(error,'Reiseplan laden');
+  console.error(detail,error);
+  if(el){el.innerHTML='<div class="plan-empty"><strong>Der gemeinsame Reiseplan konnte nicht geladen werden.</strong><br>Die Abstimmungen und Wünsche werden dadurch nicht gelöscht.<br>Technischer Hinweis: '+escapePlan(detail)+'</div>';}
  }
 }
 function renderOptimizeState(){const box=document.getElementById('planWarning');if(!box)return;const n=(window.planUnassigned||[]).length;if(n){box.style.display='block';box.innerHTML=`<strong>${n} gewünschte${n===1?'r':' Programmpunkte'} noch nicht verteilt.</strong><br>Die Optimierung berücksichtigt Tageszeiten, Fixpunkte, Aufenthaltsdauer, Wege und hinterlegte Öffnungszeiten. Öffnungszeiten für 2027 bitte vor der Reise nochmals prüfen.`;}else{box.style.display='none';}}
