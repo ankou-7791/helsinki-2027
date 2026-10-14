@@ -61,7 +61,7 @@ button.reset{border:0;background:#fff;border:1px solid var(--line);padding:10px 
 <section class="plan-section" id="planSection">
   <div class="plan-box">
     <h2>Unser Reiseplan</h2>
-    <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen. Gewünschte Programmpunkte werden automatisch darum herum sinnvoll auf die Tage verteilt.</p>
+    <p class="plan-intro">Hier entsteht euer Grundgerüst aus festen Terminen. Beim Optimieren werden Programmpunkte mit mindestens 3 × „Muss sein“ oder mindestens 2 × „Muss sein“ ohne Gegenstimme automatisch sinnvoll auf die Tage verteilt.</p>
     <div class="activity-tools"><button type="button" class="activity-button" id="activityButton">Supabase-Aktivität senden</button><span class="activity-status" id="activityStatus">Bei geringer Nutzung möglichst täglich klicken: Es werden drei reine Leseanfragen gesendet, keine Daten geändert. Eine automatische Pause lässt sich damit nicht sicher ausschließen.</span></div>
     <div class="plan-days" id="planDays"></div>
     <div class="plan-actions"><button type="button" class="primary" id="optimizePlanBtn">Reiseplan optimieren</button></div><div class="plan-warning" id="planWarning" style="display:none"></div><div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.4">Planung mit gerouteten Fußwegen, Tageszeiten, Aufenthaltsdauern und hinterlegten Öffnungszeiten. Öffnungszeiten für 2027 bitte vor der Reise nochmals prüfen.</div>
@@ -1030,58 +1030,85 @@ function candidatePlacement(name,dayKey,bucket){
  return best;
 }
 async function optimizePlan(){
- const names=[...(window.planUnassigned||[])];
- if(!names.length){alert('Es gibt keine neuen Programmpunkte zu verteilen.');return;}
  const btn=document.getElementById('optimizePlanBtn');
  if(btn){btn.disabled=true;btn.textContent='Optimierung läuft …';}
- await prepareRouting(names);
- const buckets={};planDays.forEach(d=>buckets[d.key]=[]);
- const ordered=names.map(name=>({name})).sort((a,b)=>planInfo(b.name).duration-planInfo(a.name).duration);
- const failed=[];
- for(const item of ordered){
-  let bestDay=null,best=null;
-  for(const d of planDays){
-   const placement=candidatePlacement(item.name,d.key,buckets[d.key]);
-   if(placement&&(!best||placement.score<best.score)){best=placement;bestDay=d.key;}
+ try{
+  if(!supabaseClient)throw new Error('Supabase-JavaScriptbibliothek nicht geladen');
+  const {data:votes,error:vErr}=await supabaseClient.from('abstimmungen').select('programmpunkt,name,stimme');
+  if(vErr)throw vErr;
+  const fixedNames=new Set(Object.values(fixedPlan).flat().map(x=>x.name));
+  const voteBoxes=[...document.querySelectorAll('.vote-box[data-programmpunkt]')].filter(box=>!box.classList.contains('wish-vote-box')&&!fixedNames.has(box.dataset.programmpunkt));
+  const voteSelected=voteBoxes.filter(box=>{
+   const rows=(votes||[]).filter(row=>row.programmpunkt===box.dataset.programmpunkt);
+   const muss=rows.filter(row=>row.stimme==='muss').length;
+   const nicht=rows.filter(row=>row.stimme==='nicht').length;
+   return muss>=3||(muss>=2&&nicht===0);
+  }).map(box=>box.dataset.programmpunkt);
+  const alreadyPlanned=new Set([...Object.values(planState).flat().map(x=>x.name),...(window.planUnassigned||[])]);
+  const newlySelected=voteSelected.filter(name=>!alreadyPlanned.has(name));
+  if(newlySelected.length){
+   const {error}=await supabaseClient.from('reiseplan').upsert(newlySelected.map(programmpunkt=>({programmpunkt,tag:'AUTO'})),{onConflict:'programmpunkt'});
+   if(error)throw error;
   }
-  if(bestDay)buckets[bestDay].splice(best.pos,0,item);else failed.push(item.name);
- }
- // Zweiter Pass: verschiebt einzelne Punkte, wenn dadurch die Gesamtroute klar besser wird.
- for(const from of planDays){
-  for(let i=buckets[from.key].length-1;i>=0;i--){
-   const item=buckets[from.key][i];
-   const remaining=[...buckets[from.key].slice(0,i),...buckets[from.key].slice(i+1)];
-   const fromStats=dayRouteStats(from.key,remaining);
-   if(!fromStats)continue;
-   const currentFrom=dayRouteStats(from.key,buckets[from.key]);
-   let bestMove=null;
-   for(const to of planDays){
-    if(to.key===from.key)continue;
-    const meta=optionalMeta[item.name];
-    if(meta?.days&&!meta.days.includes(to.key))continue;
-    const placement=candidatePlacement(item.name,to.key,buckets[to.key]);
-    if(!placement)continue;
-    const currentTo=dayRouteStats(to.key,buckets[to.key]);
-    const oldScore=(currentFrom?.score||0)+(currentTo?.score||0);
-    const newScore=fromStats.score+placement.score;
-    if(newScore<oldScore-8)bestMove={to,remaining,pos:placement.pos};
+  const names=[...new Set([...(window.planUnassigned||[]),...newlySelected])];
+  if(!names.length){
+   if(voteSelected.length)alert('Alle Programmpunkte, die eure Auswahlkriterien erfüllen, sind bereits im Reiseplan.');
+   else alert('Noch kein Programmpunkt erfüllt die Auswahlkriterien (3 × „Muss sein“ oder mindestens 2 × „Muss sein“ ohne Gegenstimme).');
+   return;
+  }
+  await prepareRouting(names);
+  const buckets={};planDays.forEach(d=>buckets[d.key]=[]);
+  const ordered=names.map(name=>({name})).sort((a,b)=>planInfo(b.name).duration-planInfo(a.name).duration);
+  const failed=[];
+  for(const item of ordered){
+   let bestDay=null,best=null;
+   for(const d of planDays){
+    const placement=candidatePlacement(item.name,d.key,buckets[d.key]);
+    if(placement&&(!best||placement.score<best.score)){best=placement;bestDay=d.key;}
    }
-   if(bestMove){
-    buckets[from.key]=bestMove.remaining;
-    buckets[bestMove.to.key].splice(bestMove.pos,0,item);
+   if(bestDay)buckets[bestDay].splice(best.pos,0,item);else failed.push(item.name);
+  }
+  // Zweiter Pass: verschiebt einzelne Punkte, wenn dadurch die Gesamtroute klar besser wird.
+  for(const from of planDays){
+   for(let i=buckets[from.key].length-1;i>=0;i--){
+    const item=buckets[from.key][i];
+    const remaining=[...buckets[from.key].slice(0,i),...buckets[from.key].slice(i+1)];
+    const fromStats=dayRouteStats(from.key,remaining);
+    if(!fromStats)continue;
+    const currentFrom=dayRouteStats(from.key,buckets[from.key]);
+    let bestMove=null;
+    for(const to of planDays){
+     if(to.key===from.key)continue;
+     const meta=optionalMeta[item.name];
+     if(meta?.days&&!meta.days.includes(to.key))continue;
+     const placement=candidatePlacement(item.name,to.key,buckets[to.key]);
+     if(!placement)continue;
+     const currentTo=dayRouteStats(to.key,buckets[to.key]);
+     const oldScore=(currentFrom?.score||0)+(currentTo?.score||0);
+     const newScore=fromStats.score+placement.score;
+     if(newScore<oldScore-8)bestMove={to,remaining,pos:placement.pos};
+    }
+    if(bestMove){
+     buckets[from.key]=bestMove.remaining;
+     buckets[bestMove.to.key].splice(bestMove.pos,0,item);
+    }
    }
   }
+  const updates=[];
+  Object.entries(buckets).forEach(([day,items])=>items.forEach(x=>updates.push({programmpunkt:x.name,tag:day})));
+  if(updates.length){
+   const {error}=await supabaseClient.from('reiseplan').upsert(updates,{onConflict:'programmpunkt'});
+   if(error)throw error;
+  }
+  await loadPlan();
+  const note=routeStatus==='routing'?'Geroutete Fußwege wurden berücksichtigt. Längere Wege werden bei der Planung entsprechend stärker gewichtet.':'Das Routing war nicht erreichbar; es wurde die Wege-Näherung verwendet.';
+  if(failed.length)alert(`${note}\n\nDiese Punkte konnten wegen Tages-, Zeit- oder Öffnungsgrenzen nicht sinnvoll eingeplant werden: ${failed.join(', ')}`);else alert(note);
+ }catch(error){
+  console.error('Reiseplan optimieren:',error);
+  alert('Der Reiseplan konnte nicht optimiert werden. '+supabaseDiagnostic(error,'Optimierung'));
+ }finally{
+  if(btn){btn.disabled=false;btn.textContent='Reiseplan optimieren';}
  }
- const updates=[];
- Object.entries(buckets).forEach(([day,items])=>items.forEach(x=>updates.push({programmpunkt:x.name,tag:day})));
- for(const row of updates){
-  const {error}=await supabaseClient.from('reiseplan').upsert(row,{onConflict:'programmpunkt'});
-  if(error){console.error(error);alert('Der Reiseplan konnte nicht vollständig optimiert werden.');if(btn){btn.disabled=false;btn.textContent='Reiseplan optimieren';}return;}
- }
- await loadPlan();
- if(btn){btn.disabled=false;btn.textContent='Reiseplan optimieren';}
- const note=routeStatus==='routing'?'Geroutete Fußwege wurden berücksichtigt. Längere Wege werden bei der Planung entsprechend stärker gewichtet.':'Das Routing war nicht erreichbar; es wurde die Wege-Näherung verwendet.';
- if(failed.length)alert(`${note}\n\nDiese Punkte konnten wegen Tages-, Zeit- oder Öffnungsgrenzen nicht sinnvoll eingeplant werden: ${failed.join(', ')}`);else alert(note);
 }
 
 function initPlan(){
